@@ -17,4 +17,13 @@ public interface IOrderRepository : ITenantRepository<Order>
     Task<(List<Order> Items, int TotalCount)> SearchAsync(
         OrderSearchRequestDto request,
         CancellationToken cancellationToken = default);
+
+    Task<List<Order>> GetByCustomerIdAsync(
+    Guid customerId,
+    CancellationToken cancellationToken = default);
+
+    Task<Order?> GetCustomerOrderDetailsAsync(
+        Guid orderId,
+        Guid customerId,
+        CancellationToken cancellationToken = default);
 }

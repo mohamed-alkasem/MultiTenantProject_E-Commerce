@@ -100,4 +100,30 @@ public sealed class OrderRepository : TenantRepository<Order>, IOrderRepository
 
         return (items, totalCount);
     }
+
+    public Task<List<Order>> GetByCustomerIdAsync(
+    Guid customerId,
+    CancellationToken cancellationToken = default)
+    {
+        return _context.Orders
+            .Where(x => x.CustomerId == customerId &&
+                        x.DeletedAt == null)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<Order?> GetCustomerOrderDetailsAsync(
+        Guid orderId,
+        Guid customerId,
+        CancellationToken cancellationToken = default)
+    {
+        return _context.Orders
+            .Include(x => x.Items.Where(i => i.DeletedAt == null))
+            .Include(x => x.Payments.Where(p => p.DeletedAt == null))
+            .FirstOrDefaultAsync(
+                x => x.Id == orderId &&
+                     x.CustomerId == customerId &&
+                     x.DeletedAt == null,
+                cancellationToken);
+    }
 }

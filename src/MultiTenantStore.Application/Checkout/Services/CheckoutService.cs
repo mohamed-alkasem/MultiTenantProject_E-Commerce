@@ -1,8 +1,8 @@
 ﻿using MultiTenantStore.Application.Carts.Repositories;
 using MultiTenantStore.Application.Catalog.Repositories;
-using MultiTenantStore.Application.Checkout.Services;
 using MultiTenantStore.Application.Common.DTOs;
 using MultiTenantStore.Application.Common.Interfaces;
+using MultiTenantStore.Application.Customers.Services;
 using MultiTenantStore.Application.Orders.DTOs;
 using MultiTenantStore.Application.Orders.Repositories;
 using MultiTenantStore.Application.Payments.DTOs;
@@ -21,6 +21,7 @@ public sealed class CheckoutService : ICheckoutService
     private readonly IProductRepository _productRepository;
     private readonly IProductVariantRepository _variantRepository;
     private readonly ITenantUnitOfWork _unitOfWork;
+    private readonly ICurrentCustomerService _currentCustomerService;
 
     public CheckoutService(
         ICartRepository cartRepository,
@@ -29,7 +30,8 @@ public sealed class CheckoutService : ICheckoutService
         IPaymentRepository paymentRepository,
         IProductRepository productRepository,
         IProductVariantRepository variantRepository,
-        ITenantUnitOfWork unitOfWork)
+        ITenantUnitOfWork unitOfWork,
+        ICurrentCustomerService currentCustomerService)
     {
         _cartRepository = cartRepository;
         _orderRepository = orderRepository;
@@ -38,19 +40,29 @@ public sealed class CheckoutService : ICheckoutService
         _productRepository = productRepository;
         _variantRepository = variantRepository;
         _unitOfWork = unitOfWork;
+        _currentCustomerService = currentCustomerService;
     }
 
     public async Task<ApiResponseDto<OrderDto>> CreateOrderAsync(
         CreateOrderDto dto,
         CancellationToken cancellationToken = default)
     {
-        if (dto.CartId is null && dto.Items.Count == 0)
+        var hasCart = dto.CartId is not null;
+        var hasItems = dto.Items is not null && dto.Items.Count > 0;
+
+        if (!hasCart && !hasItems)
         {
             return ApiResponseDto<OrderDto>.Fail("Order must contain cart or items.");
         }
 
-        var orderLinesResult = dto.CartId is not null
-            ? await BuildLinesFromCartAsync(dto.CartId.Value, cancellationToken)
+        var currentCustomerId = _currentCustomerService.CustomerId;
+
+        // إذا الزبون عامل login، لا نثق بـ customerId القادم من body.
+        // إذا guest، يبقى null أو القيمة القادمة من dto حسب الحاجة.
+        var orderCustomerId = currentCustomerId ?? dto.CustomerId;
+
+        var orderLinesResult = hasCart
+            ? await BuildLinesFromCartAsync(dto.CartId!.Value, cancellationToken)
             : await BuildLinesFromItemsAsync(dto.Items, cancellationToken);
 
         if (!orderLinesResult.Success || orderLinesResult.Data is null)
@@ -77,11 +89,13 @@ public sealed class CheckoutService : ICheckoutService
         {
             Id = Guid.NewGuid(),
             OrderNumber = GenerateOrderNumber(),
-            CustomerId = dto.CustomerId,
+
+            CustomerId = orderCustomerId,
 
             Status = OrderStatus.Pending,
             PaymentStatus = PaymentStatus.Pending,
             ShippingStatus = ShippingStatus.NotShipped,
+
             Subtotal = subtotal,
             DiscountAmount = discountAmount,
             ShippingAmount = shippingAmount,
@@ -162,6 +176,7 @@ public sealed class CheckoutService : ICheckoutService
             {
                 cart.Status = CartStatus.Converted;
                 cart.UpdatedAt = DateTime.UtcNow;
+
                 _cartRepository.Update(cart);
             }
         }
@@ -184,6 +199,11 @@ public sealed class CheckoutService : ICheckoutService
         if (cart is null)
         {
             return ApiResponseDto<List<OrderLineBuildResult>>.Fail("Cart was not found.");
+        }
+
+        if (cart.Status != CartStatus.Active)
+        {
+            return ApiResponseDto<List<OrderLineBuildResult>>.Fail("Cart is not active.");
         }
 
         var lines = new List<OrderLineBuildResult>();
@@ -273,9 +293,10 @@ public sealed class CheckoutService : ICheckoutService
             }
         }
 
+        var trackInventory = variant?.TrackInventory ?? product.TrackInventory;
         var stockQuantity = variant?.StockQuantity ?? product.StockQuantity;
 
-        if (stockQuantity < quantity)
+        if (trackInventory && stockQuantity < quantity)
         {
             return ApiResponseDto<OrderLineBuildResult>.Fail(
                 $"Not enough stock for product '{product.Name}'.");
@@ -322,6 +343,7 @@ public sealed class CheckoutService : ICheckoutService
                 {
                     variant.StockQuantity -= line.Quantity;
                     variant.UpdatedAt = DateTime.UtcNow;
+
                     _variantRepository.Update(variant);
                 }
 
@@ -337,6 +359,7 @@ public sealed class CheckoutService : ICheckoutService
             {
                 product.StockQuantity -= line.Quantity;
                 product.UpdatedAt = DateTime.UtcNow;
+
                 _productRepository.Update(product);
             }
         }
@@ -354,7 +377,7 @@ public sealed class CheckoutService : ICheckoutService
             Id = order.Id,
             OrderNumber = order.OrderNumber,
             CustomerId = order.CustomerId,
-            CustomerName = null,
+            CustomerName = order.ShippingFullName,
             Status = order.Status.ToString(),
             PaymentStatus = order.PaymentStatus.ToString(),
             ShippingStatus = order.ShippingStatus.ToString(),
