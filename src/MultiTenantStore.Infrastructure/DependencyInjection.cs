@@ -1,18 +1,20 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MultiTenantStore.Application.Auth.Interfaces;
 using MultiTenantStore.Application.Common.Interfaces;
 using MultiTenantStore.Application.Common.MultiTenancy;
+using MultiTenantStore.Application.Invoices.Services;
+using MultiTenantStore.Application.Stores.Interfaces;
 using MultiTenantStore.Infrastructure.Email;
+using MultiTenantStore.Infrastructure.Identity;
+using MultiTenantStore.Infrastructure.Invoices;
+using MultiTenantStore.Infrastructure.Jwt;
 using MultiTenantStore.Infrastructure.Jwt;
 using MultiTenantStore.Infrastructure.MultiTenancy;
+using MultiTenantStore.Infrastructure.Seeding;
 using MultiTenantStore.Infrastructure.Services;
 using MultiTenantStore.Infrastructure.Storage;
-using MultiTenantStore.Application.Auth.Interfaces;
-using MultiTenantStore.Application.Stores.Interfaces;
-using MultiTenantStore.Infrastructure.Identity;
-using MultiTenantStore.Infrastructure.Jwt;
 using MultiTenantStore.Infrastructure.Stores;
-using MultiTenantStore.Infrastructure.Seeding;
 
 namespace MultiTenantStore.Infrastructure;
 
@@ -53,6 +55,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantMigrationService, TenantMigrationService>();
         services.AddScoped<ITenantSeedService, TenantSeedService>();
         services.AddScoped<IStoreDatabaseService, StoreDatabaseService>();
+        services.AddScoped<IInvoicePdfGenerator, InvoicePdfGenerator>();
 
         return services;
     }

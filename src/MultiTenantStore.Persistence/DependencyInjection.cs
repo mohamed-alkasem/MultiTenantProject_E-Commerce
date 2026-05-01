@@ -1,19 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MultiTenantStore.Application.Carts.Repositories;
+using MultiTenantStore.Application.Catalog.Repositories;
 using MultiTenantStore.Application.Common.Interfaces;
 using MultiTenantStore.Application.Common.MultiTenancy;
-using MultiTenantStore.Persistence.Contexts;
-using MultiTenantStore.Persistence.Repositories.Generic;
-using MultiTenantStore.Persistence.UnitOfWork;
-using MultiTenantStore.Application.Catalog.Repositories;
-using MultiTenantStore.Persistence.Repositories.Tenant.Catalog;
-using MultiTenantStore.Application.Carts.Repositories;
-using MultiTenantStore.Persistence.Repositories.Tenant.Carts;
+using MultiTenantStore.Application.Invoices.Repositories;
+using MultiTenantStore.Application.Invoices.Services;
 using MultiTenantStore.Application.Orders.Repositories;
 using MultiTenantStore.Application.Payments.Repositories;
+using MultiTenantStore.Persistence.Contexts;
+using MultiTenantStore.Persistence.Repositories.Generic;
+using MultiTenantStore.Persistence.Repositories.Tenant.Carts;
+using MultiTenantStore.Persistence.Repositories.Tenant.Catalog;
+using MultiTenantStore.Persistence.Repositories.Tenant.Invoices;
 using MultiTenantStore.Persistence.Repositories.Tenant.Orders;
 using MultiTenantStore.Persistence.Repositories.Tenant.Payments;
+using MultiTenantStore.Persistence.UnitOfWork;
 
 
 
@@ -67,6 +70,8 @@ public static class DependencyInjection
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IOrderItemRepository, OrderItemRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+        services.AddScoped<IInvoiceItemRepository, InvoiceItemRepository>();
 
         return services;
     }
