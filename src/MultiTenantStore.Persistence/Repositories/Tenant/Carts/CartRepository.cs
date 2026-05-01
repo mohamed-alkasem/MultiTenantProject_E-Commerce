@@ -61,4 +61,33 @@ public sealed class CartRepository : TenantRepository<Cart>, ICartRepository
                      x.DeletedAt == null,
                 cancellationToken);
     }
+
+    public Task<Cart?> GetActiveByCustomerIdAsync(
+    Guid customerId,
+    CancellationToken cancellationToken = default)
+    {
+        return _context.Carts
+            .FirstOrDefaultAsync(
+                x => x.CustomerId == customerId &&
+                     x.Status == CartStatus.Active &&
+                     x.DeletedAt == null,
+                cancellationToken);
+    }
+
+    public Task<Cart?> GetDetailsByCustomerIdAsync(
+        Guid customerId,
+        CancellationToken cancellationToken = default)
+    {
+        return _context.Carts
+            .Include(x => x.Items.Where(i => i.DeletedAt == null))
+                .ThenInclude(x => x.Product)
+                    .ThenInclude(x => x.Images)
+            .Include(x => x.Items.Where(i => i.DeletedAt == null))
+                .ThenInclude(x => x.ProductVariant)
+            .FirstOrDefaultAsync(
+                x => x.CustomerId == customerId &&
+                     x.Status == CartStatus.Active &&
+                     x.DeletedAt == null,
+                cancellationToken);
+    }
 }

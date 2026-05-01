@@ -16,4 +16,12 @@ public interface ICartRepository : ITenantRepository<Cart>
     Task<Cart?> GetDetailsBySessionIdAsync(
         string sessionId,
         CancellationToken cancellationToken = default);
+
+    Task<Cart?> GetActiveByCustomerIdAsync(
+    Guid customerId,
+    CancellationToken cancellationToken = default);
+
+    Task<Cart?> GetDetailsByCustomerIdAsync(
+        Guid customerId,
+        CancellationToken cancellationToken = default);
 }

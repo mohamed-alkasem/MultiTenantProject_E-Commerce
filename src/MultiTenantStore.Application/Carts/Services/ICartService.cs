@@ -31,4 +31,11 @@ public interface ICartService
     Task<ApiResponseDto<bool>> ClearCartAsync(
         string sessionId,
         CancellationToken cancellationToken = default);
+
+    Task<ApiResponseDto<CartDto>> MergeGuestCartAsync(
+    MergeCartDto dto,
+    CancellationToken cancellationToken = default);
+
+    Task<ApiResponseDto<CartDto>> GetCustomerCartAsync(
+        CancellationToken cancellationToken = default);
 }
