@@ -1,0 +1,888 @@
+أكيد حبيبي. هذا ملخص احترافي ومنظم لكل اللي اتفقنا عليه، تقدر تستخدمه كـ **project brief / architecture summary** إذا بدك تكمل مع AI agent ثاني أو تشرح المشروع لشخص آخر.
+
+---
+
+# ملخص مشروع MultiTenantStore
+
+المشروع عبارة عن منصة **Multi-Tenant E-Commerce SaaS**.
+الفكرة أن صاحب المنصة يسمح للتجار بإنشاء متاجر إلكترونية خاصة بهم، وكل متجر يكون له بياناته المستقلة وقاعدة بيانات منفصلة.
+
+المعمارية المعتمدة هي:
+
+```text
+Onion Architecture / Clean Architecture Style
+```
+
+أي أن النظام مقسّم إلى طبقات واضحة:
+
+```text
+Domain
+Application
+Persistence
+Infrastructure
+Web
+Tests
+```
+
+والاعتماد يكون دائمًا من الخارج إلى الداخل:
+
+```text
+Web → Application
+Infrastructure → Application
+Persistence → Application / Domain
+Application → Domain
+Domain → لا يعتمد على أحد
+```
+
+---
+
+# 1. فكرة الـ Multi-Tenancy المعتمدة
+
+قررنا استخدام نموذج:
+
+```text
+Database per Tenant
+```
+
+يعني يوجد نوعان من قواعد البيانات:
+
+## Main / Platform Database
+
+هذه قاعدة بيانات المنصة الأساسية، وتحتوي على بيانات:
+
+```text
+Identity Users
+Stores
+Store Users
+Store Domains
+Store Databases
+Store Branding
+Subscription Plans
+Store Subscriptions
+Subscription Payments
+```
+
+هذه القاعدة مسؤولة عن معرفة:
+
+```text
+مين صاحب المتجر؟
+ما هو المتجر؟
+ما هو الـ subdomain؟
+ما هي قاعدة بيانات المتجر؟
+ما هو الاشتراك؟
+من هم الموظفون؟
+```
+
+## Tenant Database
+
+كل متجر له قاعدة بيانات مستقلة خاصة به، وتحتوي على:
+
+```text
+Store Settings
+Customers
+Customer Addresses
+Categories
+Products
+Product Variants
+Product Images
+Carts
+Cart Items
+Orders
+Order Items
+Payments
+Invoices
+Invoice Items
+```
+
+---
+
+# 2. طريقة تحديد الـ Tenant
+
+اتفقنا أن تحديد المتجر الحالي يتم بطريقتين فقط حاليًا:
+
+## Public Store
+
+للمتجر العام، يتم تحديد المتجر من الـ subdomain:
+
+```text
+ahmad.platform.com
+```
+
+النظام يقرأ:
+
+```text
+subdomain = ahmad
+```
+
+ثم يبحث في جدول:
+
+```text
+StoreDomain
+```
+
+وبعدها يجيب:
+
+```text
+StoreId
+StoreDatabase
+ConnectionStringEncrypted
+```
+
+ثم يفتح قاعدة بيانات هذا المتجر.
+
+## Dashboard
+
+بالنسبة لصاحب المتجر أو الموظفين داخل لوحة التحكم، يتم تحديد المتجر من الـ claims داخل الـ JWT token:
+
+```text
+store_id
+store_role
+user_id
+```
+
+ثم النظام يتحقق من جدول:
+
+```text
+StoreUser
+```
+
+ليتأكد أن المستخدم له صلاحية على هذا المتجر.
+
+قررنا حاليًا عدم استخدام:
+
+```text
+Custom Domain
+Header Tenant
+Route Tenant
+```
+
+وقد تؤجل هذه الميزات لاحقًا.
+
+---
+
+# 3. الـ Middleware المتفق عليه
+
+أهم middleware في النظام هو:
+
+```text
+TenantResolutionMiddleware
+```
+
+وظيفته:
+
+```text
+1. يقرأ نوع الـ route.
+2. إذا كان route لا يحتاج tenant يتجاوزه.
+3. إذا كان Dashboard يقرأ tenant من Claims.
+4. إذا كان Public / Customer / Cart / Checkout يقرأ tenant من Subdomain.
+5. يجلب TenantInfo من Main DB.
+6. يتحقق أن المتجر Active.
+7. يخزن معلومات المتجر في CurrentTenant.
+8. بعدها TenantDbContext يستخدم connection string الصحيح.
+```
+
+ترتيب الـ pipeline المتفق عليه:
+
+```text
+ExceptionHandling
+StaticFiles
+Routing
+Authentication
+TenantResolution
+Authorization
+Controllers / MVC Routes
+```
+
+والسبب أن `TenantResolution` يأتي بعد `Authentication` هو أن dashboard يحتاج قراءة الـ claims من المستخدم.
+
+---
+
+# 4. Authentication و Authorization
+
+اتفقنا أن عندنا نوعين من المستخدمين:
+
+## Merchant / Staff / Platform Admin
+
+هؤلاء موجودون في:
+
+```text
+MainDbContext
+ASP.NET Core Identity
+ApplicationUser
+```
+
+ويتم التعامل معهم عبر:
+
+```text
+UserManager
+SignInManager
+RoleManager
+JWT
+```
+
+## Customer
+
+الزبون العادي ليس جزءًا من Identity الأساسي.
+الزبون موجود داخل قاعدة بيانات المتجر نفسه:
+
+```text
+TenantDbContext
+Customer
+```
+
+لأن زبون متجر أحمد مستقل عن زبون متجر علي.
+
+---
+
+# 5. StoreUserRole
+
+داخل المتجر يوجد أدوار خاصة بالموظفين:
+
+```text
+Owner
+Manager
+ProductManager
+OrderManager
+Accountant
+Support
+```
+
+هذه تختلف عن Identity Roles العامة.
+
+بمعنى:
+
+```text
+Identity Role = دور عام في المنصة
+StoreUserRole = دور داخل متجر محدد
+```
+
+لاحقًا يجب تحويل هذه الأدوار إلى authorization policies مثل:
+
+```text
+CanManageProducts
+CanManageOrders
+CanManageInvoices
+CanManageSettings
+CanManageStaff
+```
+
+---
+
+# 6. قواعد البيانات والجداول
+
+## Platform / Main DB
+
+الجداول الأساسية:
+
+```text
+ASP_NET_USERS
+ASP_NET_ROLES
+ASP_NET_USER_ROLES
+ASP_NET_USER_CLAIMS
+ASP_NET_ROLE_CLAIMS
+ASP_NET_USER_LOGINS
+ASP_NET_USER_TOKENS
+
+STORE
+STORE_USER
+STORE_DOMAIN
+STORE_DATABASE
+STORE_BRANDING
+SUBSCRIPTION_PLAN
+STORE_SUBSCRIPTION
+SUBSCRIPTION_PAYMENT
+```
+
+## Tenant DB
+
+الجداول الأساسية:
+
+```text
+STORE_SETTING
+CUSTOMER
+CUSTOMER_ADDRESS
+CATEGORY
+PRODUCT
+PRODUCT_VARIANT
+PRODUCT_IMAGE
+CART
+CART_ITEM
+ORDER
+ORDER_ITEM
+PAYMENT
+INVOICE
+INVOICE_ITEM
+```
+
+---
+
+# 7. ملاحظات مهمة على تصميم قاعدة البيانات
+
+اتفقنا على هذه النقاط:
+
+```text
+1. لا نجعل Entity classes sealed.
+2. نستخدم AuditableEntity و ISoftDelete.
+3. أغلب الحقول مثل UpdatedAt و DeletedAt تكون nullable.
+4. ProductVariantId في CartItem و OrderItem يكون nullable.
+5. Order يحتوي address snapshot.
+6. OrderItem يحتوي product snapshot.
+7. Invoice و InvoiceItem يحتويان snapshots كذلك.
+8. Payment علاقة one-to-many مع Order.
+9. StoreDatabase يحتوي ConnectionStringEncrypted ولا يظهر في أي API response.
+```
+
+---
+
+# 8. Unique Indexes المهمة
+
+## Platform DB
+
+```text
+STORE.Slug unique
+STORE_DOMAIN.Subdomain unique
+STORE_DOMAIN.FullDomain unique
+STORE_DATABASE.StoreId unique
+STORE_BRANDING.StoreId unique
+STORE_USER.StoreId + UserId unique
+SUBSCRIPTION_PLAN.Code unique
+```
+
+## Tenant DB
+
+```text
+CUSTOMER.Email unique
+CATEGORY.Slug unique
+PRODUCT.Slug unique
+PRODUCT.SKU unique
+PRODUCT_VARIANT.SKU unique
+ORDER.OrderNumber unique
+INVOICE.InvoiceNumber unique
+CART_ITEM.CartId + ProductId + ProductVariantId unique
+```
+
+---
+
+# 9. الفواتير و QuestPDF
+
+أضفنا نظام فواتير داخل Tenant DB.
+
+الجداول:
+
+```text
+Invoice
+InvoiceItem
+```
+
+الفاتورة تنشأ بعد نجاح checkout.
+
+الـ flow:
+
+```text
+Checkout
+Create Order
+Create Payment
+Decrease Stock
+Create Invoice
+Generate PDF using QuestPDF
+Upload PDF to S3
+Save PdfUrl in Invoice
+```
+
+قررنا أن مكتبة QuestPDF تكون في:
+
+```text
+Infrastructure/Invoices
+```
+
+وليس داخل Domain أو Application.
+
+الكلاسات المتفق عليها:
+
+```text
+IInvoiceService
+InvoiceService
+IInvoiceNumberService
+InvoiceNumberService
+IInvoicePdfService
+QuestPdfInvoiceService
+IInvoiceTemplateBuilder
+QuestPdfInvoiceTemplateBuilder
+```
+
+---
+
+# 10. S3 Storage
+
+قررنا استخدام Amazon S3 لتخزين:
+
+```text
+Store logos
+Product images
+Invoice PDFs
+```
+
+ولكن الخدمات لا تتعامل مباشرة مع AWS SDK.
+كل شيء يمر عبر abstraction:
+
+```text
+IFileStorageService
+```
+
+وتطبيقه:
+
+```text
+S3StorageService
+```
+
+مسارات التخزين المتفق عليها:
+
+```text
+stores/{storeId}/branding/logo/{fileName}
+stores/{storeId}/products/{productId}/images/{fileName}
+stores/{storeId}/invoices/{invoiceId}/{invoiceNumber}.pdf
+```
+
+الـ S3 الحقيقي لم نكمل إعداداته بعد لأن القيم غير متوفرة:
+
+```text
+BucketName
+Region
+AccessKey
+SecretKey
+PublicBaseUrl
+```
+
+---
+
+# 11. Project Structure النهائي
+
+البنية المعتمدة:
+
+```text
+src
+ ├── MultiTenantStore.Domain
+ ├── MultiTenantStore.Application
+ ├── MultiTenantStore.Persistence
+ ├── MultiTenantStore.Infrastructure
+ └── MultiTenantStore.Web
+
+tests
+ ├── MultiTenantStore.UnitTests
+ └── MultiTenantStore.IntegrationTests
+```
+
+## Domain
+
+يحتوي على:
+
+```text
+Common
+Enums
+Platform Entities
+Tenant Entities
+```
+
+## Application
+
+يحتوي على:
+
+```text
+DTOs
+Interfaces
+Services
+Validators
+Authorization definitions
+MultiTenancy abstractions
+```
+
+## Persistence
+
+يحتوي على:
+
+```text
+MainDbContext
+TenantDbContext
+EF Configurations
+Repositories
+UnitOfWork
+Migrations/Main
+Migrations/Tenant
+```
+
+## Infrastructure
+
+يحتوي على:
+
+```text
+JWT
+Email
+S3 Storage
+QuestPDF
+MultiTenancy implementations
+Authorization handlers
+DateTimeService
+Options classes
+```
+
+## Web
+
+يحتوي على:
+
+```text
+API Controllers
+MVC Areas
+Views
+ViewModels
+Middlewares
+Filters
+Extensions
+Program.cs
+appsettings.json
+```
+
+---
+
+# 12. API Routes المتفق عليها
+
+## No Tenant Required
+
+```text
+/api/auth/*
+/api/platform/*
+/swagger
+/health
+```
+
+## Tenant From Claims
+
+```text
+/api/dashboard/*
+/dashboard/*
+```
+
+## Tenant From Subdomain
+
+```text
+/api/public/*
+/api/customer/*
+/api/cart/*
+/api/checkout/*
+/api/payments/*
+Storefront MVC routes
+```
+
+ملاحظة مهمة:
+
+```text
+/api/auth/* لا يحتاج tenant
+/api/customer/* يحتاج tenant
+```
+
+لأن merchant login يكون من Main DB، أما customer login يكون داخل Tenant DB.
+
+---
+
+# 13. JSON Settings
+
+كل إعدادات JSON توضع داخل:
+
+```text
+src/MultiTenantStore.Web/appsettings.json
+```
+
+لأن Web هو startup project.
+
+قاعدة البيانات المحلية الحالية:
+
+```text
+Server: DESKTOP-CNQ5IH7
+User: sa
+Password: 123456
+```
+
+Connection strings المستخدمة:
+
+```json
+"ConnectionStrings": {
+  "MainDb": "Server=DESKTOP-CNQ5IH7;Database=MultiTenantStore_Main;User Id=sa;Password=123456;TrustServerCertificate=True;MultipleActiveResultSets=True;",
+  "TenantDbTemplate": "Server=DESKTOP-CNQ5IH7;Database={databaseName};User Id=sa;Password=123456;TrustServerCertificate=True;MultipleActiveResultSets=True;",
+  "TenantMigrationDb": "Server=DESKTOP-CNQ5IH7;Database=MultiTenantStore_Tenant_Migration;User Id=sa;Password=123456;TrustServerCertificate=True;MultipleActiveResultSets=True;"
+}
+```
+
+تنبيه: هذه القيم محلية فقط ولا يجب رفعها إلى GitHub في مشروع حقيقي.
+
+---
+
+# 14. Migrations
+
+عندنا نوعين migrations:
+
+## MainDbContext Migration
+
+خاص بالـ platform database.
+
+الأمر:
+
+```powershell
+dotnet ef migrations add InitialMainDb `
+  --project .\src\MultiTenantStore.Persistence `
+  --startup-project .\src\MultiTenantStore.Web `
+  --context MainDbContext `
+  --output-dir Migrations\Main
+```
+
+ثم:
+
+```powershell
+dotnet ef database update `
+  --project .\src\MultiTenantStore.Persistence `
+  --startup-project .\src\MultiTenantStore.Web `
+  --context MainDbContext
+```
+
+## TenantDbContext Migration
+
+خاص بجداول كل متجر.
+
+الأمر:
+
+```powershell
+dotnet ef migrations add InitialTenantDb `
+  --project .\src\MultiTenantStore.Persistence `
+  --startup-project .\src\MultiTenantStore.Web `
+  --context TenantDbContext `
+  --output-dir Migrations\Tenant
+```
+
+لأن TenantDbContext يعتمد على connection string ديناميكي، أضفنا design-time factory:
+
+```text
+TenantDbContextFactory
+```
+
+تقرأ connection string:
+
+```text
+TenantMigrationDb
+```
+
+هذه القاعدة فقط من أجل design-time migration، وليست قاعدة متجر حقيقية.
+
+لاحقًا عند إنشاء متجر جديد، النظام يستخدم:
+
+```text
+TenantDbTemplate
+```
+
+ويستبدل:
+
+```text
+{databaseName}
+```
+
+باسم قاعدة بيانات المتجر ثم يشغل:
+
+```text
+Database.Migrate()
+```
+
+---
+
+# 15. مشاكل تم حلها أثناء الإعداد
+
+واجهنا مشاكل وتم حلها:
+
+## اختلاف TargetFramework
+
+كانت بعض المشاريع `net8.0` وبعضها `net9.0`.
+اتفقنا على توحيدها كلها، وعمليًا كان المشروع يستخدم packages 9.0.15.
+
+## IdentityUser غير معروف داخل Domain
+
+لأن `ApplicationUser` يرث من:
+
+```csharp
+IdentityUser<Guid>
+```
+
+احتاج مشروع Domain إلى package:
+
+```text
+Microsoft.Extensions.Identity.Stores
+```
+
+## Microsoft.Extensions.Options.ConfigurationExtensions
+
+احتجنا إضافة package مطابق للنسخة:
+
+```text
+Microsoft.Extensions.Options.ConfigurationExtensions 9.0.15
+```
+
+لتفعيل:
+
+```csharp
+services.Configure<TOptions>(configuration.GetSection("..."))
+```
+
+## Microsoft.CodeAnalysis.Workspaces
+
+وقت migration ظهر نقص في Roslyn package، وتم حله بإضافة:
+
+```text
+Microsoft.CodeAnalysis.CSharp.Workspaces 4.8.0
+```
+
+إلى Persistence و/أو Web.
+
+## TenantDbContext design-time error
+
+لأن EF لم يكن يعرف كيف ينشئ TenantDbContext، أضفنا:
+
+```text
+TenantDbContextFactory : IDesignTimeDbContextFactory<TenantDbContext>
+```
+
+## SetBasePath / AddEnvironmentVariables errors
+
+تم حلها بإضافة packages المطلوبة أو حذف `AddEnvironmentVariables()` مؤقتًا.
+
+---
+
+# 16. Enums المتفق عليها
+
+```text
+StoreStatus
+SubscriptionStatus
+ProvisioningStatus
+StoreUserRole
+BillingCycle
+CartStatus
+OrderStatus
+PaymentStatus
+ShippingStatus
+InvoiceStatus
+StorageProvider
+```
+
+وتخزينها في DB يكون كـ int باستخدام:
+
+```csharp
+.HasConversion<int>()
+```
+
+---
+
+# 17. ما الذي تم تنفيذه أو الاتفاق عليه حتى الآن؟
+
+تم الاتفاق على:
+
+```text
+Onion Architecture
+Database per Tenant
+MainDbContext with Identity
+TenantDbContext
+Subdomain resolution للـ public store
+Claims resolution للـ dashboard
+S3 abstraction
+QuestPDF للفاتورة
+API routes
+MVC Areas
+Project structure
+Entities
+EF configurations
+Migrations strategy
+JSON configuration
+Middleware pipeline
+```
+
+---
+
+# 18. ما الذي ما زال ناقصًا بعد هذه المرحلة؟
+
+المرحلة التالية بعد migrations هي تنفيذ الخدمات بالترتيب:
+
+```text
+1. DependencyInjection لكل طبقة بشكل نهائي
+2. Repositories + UnitOfWork
+3. CurrentTenant + TenantResolutionMiddleware
+4. TenantStore
+5. TenantAccessValidator
+6. AuthService + TokenService
+7. StoreOnboardingService
+8. StoreDatabaseService + TenantMigrationService
+9. Category/Product services
+10. Public store endpoints
+11. Cart / Checkout / Order
+12. Invoice + QuestPDF + S3
+```
+
+---
+
+# 19. MVP المقترح
+
+أول نسخة لا يجب أن تحتوي على كل شيء.
+الـ MVP المتفق عليه:
+
+```text
+Merchant register/login
+Create store automatically
+Create tenant database
+Tenant resolution
+Dashboard categories
+Dashboard products
+Product images to S3
+Public products listing
+Cart
+Checkout
+Order
+Invoice PDF with QuestPDF
+Upload invoice PDF to S3
+```
+
+نؤجل:
+
+```text
+Real online payment
+Advanced staff permissions
+Custom domain
+Redis
+Hangfire
+Analytics
+Coupons
+Shipping integrations
+Complex subscription billing
+```
+
+---
+
+# الخلاصة
+
+المشروع عبارة عن منصة SaaS متعددة المتاجر باستخدام:
+
+```text
+ASP.NET Core
+EF Core
+Identity
+JWT
+SQL Server
+Database per Tenant
+Onion Architecture
+QuestPDF
+S3
+```
+
+التصميم الأساسي أصبح جاهزًا.
+الخطوة المنطقية التالية هي إكمال migrations ثم تنفيذ طبقة persistence والخدمات الأساسية، وأولها:
+
+```text
+MainDbContext / TenantDbContext
+Repositories
+Tenant Resolution
+Auth
+Store Onboarding
+```
+
+هذا الملخص هو المرجع الحالي للمشروع.
