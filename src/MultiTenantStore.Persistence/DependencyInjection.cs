@@ -11,6 +11,7 @@ using MultiTenantStore.Application.Invoices.Repositories;
 using MultiTenantStore.Application.Invoices.Services;
 using MultiTenantStore.Application.Orders.Repositories;
 using MultiTenantStore.Application.Payments.Repositories;
+using MultiTenantStore.Application.StoreSettings.Repositories;
 using MultiTenantStore.Persistence.Contexts;
 using MultiTenantStore.Persistence.Repositories.Generic;
 using MultiTenantStore.Persistence.Repositories.Tenant.Carts;
@@ -19,6 +20,7 @@ using MultiTenantStore.Persistence.Repositories.Tenant.Customers;
 using MultiTenantStore.Persistence.Repositories.Tenant.Invoices;
 using MultiTenantStore.Persistence.Repositories.Tenant.Orders;
 using MultiTenantStore.Persistence.Repositories.Tenant.Payments;
+using MultiTenantStore.Persistence.Repositories.Tenant.Settings;
 using MultiTenantStore.Persistence.UnitOfWork;
 
 
@@ -79,6 +81,7 @@ public static class DependencyInjection
 
         services.AddScoped<ICustomerRepository, CustomerRepository>();
         services.AddScoped<ICustomerAddressRepository, CustomerAddressRepository>();
+        services.AddScoped<IStoreSettingRepository, StoreSettingRepository>();
         return services;
     }
 }

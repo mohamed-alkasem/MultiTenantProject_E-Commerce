@@ -7,6 +7,7 @@ using MultiTenantStore.Application.Orders.DTOs;
 using MultiTenantStore.Application.Orders.Repositories;
 using MultiTenantStore.Application.Payments.DTOs;
 using MultiTenantStore.Application.Payments.Repositories;
+using MultiTenantStore.Application.StoreSettings.Repositories;
 using MultiTenantStore.Domain.Enums;
 using MultiTenantStore.Domain.Tenant;
 
@@ -22,16 +23,17 @@ public sealed class CheckoutService : ICheckoutService
     private readonly IProductVariantRepository _variantRepository;
     private readonly ITenantUnitOfWork _unitOfWork;
     private readonly ICurrentCustomerService _currentCustomerService;
-
+    private readonly IStoreSettingRepository _storeSettingRepository;
     public CheckoutService(
-        ICartRepository cartRepository,
-        IOrderRepository orderRepository,
-        IOrderItemRepository orderItemRepository,
-        IPaymentRepository paymentRepository,
-        IProductRepository productRepository,
-        IProductVariantRepository variantRepository,
-        ITenantUnitOfWork unitOfWork,
-        ICurrentCustomerService currentCustomerService)
+     ICartRepository cartRepository,
+     IOrderRepository orderRepository,
+     IOrderItemRepository orderItemRepository,
+     IPaymentRepository paymentRepository,
+     IProductRepository productRepository,
+     IProductVariantRepository variantRepository,
+     ITenantUnitOfWork unitOfWork,
+     ICurrentCustomerService currentCustomerService,
+     IStoreSettingRepository storeSettingRepository)
     {
         _cartRepository = cartRepository;
         _orderRepository = orderRepository;
@@ -41,6 +43,7 @@ public sealed class CheckoutService : ICheckoutService
         _variantRepository = variantRepository;
         _unitOfWork = unitOfWork;
         _currentCustomerService = currentCustomerService;
+        _storeSettingRepository = storeSettingRepository;
     }
 
     public async Task<ApiResponseDto<OrderDto>> CreateOrderAsync(
@@ -53,6 +56,20 @@ public sealed class CheckoutService : ICheckoutService
         if (!hasCart && !hasItems)
         {
             return ApiResponseDto<OrderDto>.Fail("Order must contain cart or items.");
+        }
+        var settings = await _storeSettingRepository.GetCurrentAsync(cancellationToken);
+
+        settings ??= new StoreSetting
+        {
+            Currency = "USD",
+            OrderPrefix = "ORD",
+            IsCheckoutEnabled = true,
+            TaxEnabled = false
+        };
+
+        if (!settings.IsCheckoutEnabled)
+        {
+            return ApiResponseDto<OrderDto>.Fail("Checkout is currently disabled.");
         }
 
         var currentCustomerId = _currentCustomerService.CustomerId;
@@ -82,14 +99,15 @@ public sealed class CheckoutService : ICheckoutService
         var subtotal = orderLines.Sum(x => x.LineTotal);
         var discountAmount = 0m;
         var shippingAmount = 0m;
-        var taxAmount = 0m;
+        var taxAmount = settings.TaxEnabled
+            ? 0m
+            : 0m;
         var totalAmount = subtotal - discountAmount + shippingAmount + taxAmount;
 
         var order = new Order
         {
             Id = Guid.NewGuid(),
-            OrderNumber = GenerateOrderNumber(),
-
+            OrderNumber = GenerateOrderNumber(settings.OrderPrefix),
             CustomerId = orderCustomerId,
 
             Status = OrderStatus.Pending,
@@ -101,8 +119,7 @@ public sealed class CheckoutService : ICheckoutService
             ShippingAmount = shippingAmount,
             TaxAmount = taxAmount,
             TotalAmount = totalAmount,
-            Currency = "USD",
-
+            Currency = settings.Currency,
             ShippingFullName = dto.ShippingAddress.FullName,
             ShippingPhone = dto.ShippingAddress.Phone,
             ShippingCountry = dto.ShippingAddress.Country,
@@ -365,9 +382,13 @@ public sealed class CheckoutService : ICheckoutService
         }
     }
 
-    private static string GenerateOrderNumber()
+    private static string GenerateOrderNumber(string orderPrefix)
     {
-        return $"ORD-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
+        var prefix = string.IsNullOrWhiteSpace(orderPrefix)
+            ? "ORD"
+            : orderPrefix.Trim().ToUpperInvariant();
+
+        return $"{prefix}-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
     }
 
     private static OrderDto MapToDto(Order order)

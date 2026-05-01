@@ -6,6 +6,7 @@ using MultiTenantStore.Application.Customers.Services;
 using MultiTenantStore.Application.Invoices.Services;
 using MultiTenantStore.Application.Orders.Services;
 using MultiTenantStore.Application.Storefront.Services;
+using MultiTenantStore.Application.StoreSettings.Services;
 namespace MultiTenantStore.Application;
 
 public static class DependencyInjection
@@ -28,6 +29,7 @@ public static class DependencyInjection
         services.AddScoped<ICustomerAddressService, CustomerAddressService>();
 
         services.AddScoped<ICustomerOrderService, CustomerOrderService>();
+        services.AddScoped<IStoreSettingService, StoreSettingService>();
 
         return services;
     }
