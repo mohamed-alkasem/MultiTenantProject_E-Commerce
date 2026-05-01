@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
-using MultiTenantStore.Application.Catalog.Services;
-using MultiTenantStore.Application.Storefront.Services;
 using MultiTenantStore.Application.Carts.Services;
+using MultiTenantStore.Application.Catalog.Services;
+using MultiTenantStore.Application.Checkout.Services;
+using MultiTenantStore.Application.Orders.Services;
+using MultiTenantStore.Application.Storefront.Services;
 namespace MultiTenantStore.Application;
 
 public static class DependencyInjection
@@ -15,6 +17,8 @@ public static class DependencyInjection
 
         services.AddScoped<IPublicCatalogService, PublicCatalogService>();
         services.AddScoped<ICartService, CartService>();
+        services.AddScoped<ICheckoutService, CheckoutService>();
+        services.AddScoped<IOrderService, OrderService>();
 
         return services;
     }

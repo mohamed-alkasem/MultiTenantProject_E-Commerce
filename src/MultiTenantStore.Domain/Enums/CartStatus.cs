@@ -1,7 +1,9 @@
+namespace MultiTenantStore.Domain.Enums;
+
 public enum CartStatus
 {
     Active = 1,
-    ConvertedToOrder = 2,
+    Converted = 2,
     Abandoned = 3,
-    Cleared = 4
+    Expired = 4
 }

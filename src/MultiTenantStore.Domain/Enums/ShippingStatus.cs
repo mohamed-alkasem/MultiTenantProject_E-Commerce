@@ -1,9 +1,11 @@
+namespace MultiTenantStore.Domain.Enums;
+
 public enum ShippingStatus
 {
-    NotRequired = 1,
-    NotShipped = 2,
-    Preparing = 3,
-    Shipped = 4,
-    Delivered = 5,
+    NotShipped = 1,
+    Processing = 2,
+    Shipped = 3,
+    Delivered = 4,
+    Cancelled = 5,
     Returned = 6
 }

@@ -10,6 +10,13 @@ using MultiTenantStore.Application.Catalog.Repositories;
 using MultiTenantStore.Persistence.Repositories.Tenant.Catalog;
 using MultiTenantStore.Application.Carts.Repositories;
 using MultiTenantStore.Persistence.Repositories.Tenant.Carts;
+using MultiTenantStore.Application.Orders.Repositories;
+using MultiTenantStore.Application.Payments.Repositories;
+using MultiTenantStore.Persistence.Repositories.Tenant.Orders;
+using MultiTenantStore.Persistence.Repositories.Tenant.Payments;
+
+
+
 namespace MultiTenantStore.Persistence;
 
 public static class DependencyInjection
@@ -56,6 +63,10 @@ public static class DependencyInjection
         services.AddScoped<ITenantUnitOfWork, TenantUnitOfWork>();
         services.AddScoped<ICartRepository, CartRepository>();
         services.AddScoped<ICartItemRepository, CartItemRepository>();
+
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
 
         return services;
     }
