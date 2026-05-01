@@ -1,6 +1,7 @@
 using MultiTenantStore.Application.Common.DTOs;
 using MultiTenantStore.Application.Common.Interfaces;
 using MultiTenantStore.Application.Common.MultiTenancy;
+using MultiTenantStore.Application.Common.Storage;
 using MultiTenantStore.Application.Invoices.DTOs;
 using MultiTenantStore.Application.Invoices.Repositories;
 using MultiTenantStore.Application.Orders.Repositories;
@@ -17,14 +18,16 @@ public sealed class InvoiceService : IInvoiceService
     private readonly ITenantUnitOfWork _unitOfWork;
     private readonly ICurrentTenant _currentTenant;
     private readonly IInvoicePdfGenerator _pdfGenerator;
+    private readonly IFileStorageService _fileStorageService;
 
     public InvoiceService(
-        IInvoiceRepository invoiceRepository,
-        IInvoiceItemRepository invoiceItemRepository,
-        IOrderRepository orderRepository,
-        ITenantUnitOfWork unitOfWork,
-        ICurrentTenant currentTenant,
-        IInvoicePdfGenerator pdfGenerator)
+    IInvoiceRepository invoiceRepository,
+    IInvoiceItemRepository invoiceItemRepository,
+    IOrderRepository orderRepository,
+    ITenantUnitOfWork unitOfWork,
+    ICurrentTenant currentTenant,
+    IInvoicePdfGenerator pdfGenerator,
+    IFileStorageService fileStorageService)
     {
         _invoiceRepository = invoiceRepository;
         _invoiceItemRepository = invoiceItemRepository;
@@ -32,6 +35,7 @@ public sealed class InvoiceService : IInvoiceService
         _unitOfWork = unitOfWork;
         _currentTenant = currentTenant;
         _pdfGenerator = pdfGenerator;
+        _fileStorageService = fileStorageService;
     }
 
     public async Task<ApiResponseDto<InvoiceDto>> CreateForOrderAsync(
@@ -250,5 +254,45 @@ public sealed class InvoiceService : IInvoiceService
                 })
                 .ToList()
         };
+    }
+
+    public async Task<ApiResponseDto<InvoiceDto>> GenerateAndUploadPdfAsync(
+    Guid invoiceId,
+    CancellationToken cancellationToken = default)
+    {
+        var invoice = await _invoiceRepository.GetDetailsAsync(
+            invoiceId,
+            cancellationToken);
+
+        if (invoice is null)
+        {
+            return ApiResponseDto<InvoiceDto>.Fail("Invoice was not found.");
+        }
+
+        var invoiceDto = MapToDto(invoice);
+
+        var pdfBytes = _pdfGenerator.Generate(invoiceDto);
+
+        var fileName = $"{invoice.InvoiceNumber}.pdf";
+
+        var folder = $"stores/{_currentTenant.StoreId}/invoices";
+
+        var pdfUrl = await _fileStorageService.UploadAsync(
+            pdfBytes,
+            fileName,
+            "application/pdf",
+            folder,
+            cancellationToken);
+
+        invoice.PdfUrl = pdfUrl;
+        invoice.UpdatedAt = DateTime.UtcNow;
+
+        _invoiceRepository.Update(invoice);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return ApiResponseDto<InvoiceDto>.Ok(
+            MapToDto(invoice),
+            "Invoice PDF generated and uploaded successfully.");
     }
 }

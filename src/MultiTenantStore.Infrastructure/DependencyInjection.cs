@@ -3,8 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using MultiTenantStore.Application.Auth.Interfaces;
 using MultiTenantStore.Application.Common.Interfaces;
 using MultiTenantStore.Application.Common.MultiTenancy;
+using MultiTenantStore.Application.Common.Storage;
+using MultiTenantStore.Application.Customers.Services;
 using MultiTenantStore.Application.Invoices.Services;
 using MultiTenantStore.Application.Stores.Interfaces;
+using MultiTenantStore.Infrastructure.Customers;
 using MultiTenantStore.Infrastructure.Email;
 using MultiTenantStore.Infrastructure.Identity;
 using MultiTenantStore.Infrastructure.Invoices;
@@ -56,6 +59,14 @@ public static class DependencyInjection
         services.AddScoped<ITenantSeedService, TenantSeedService>();
         services.AddScoped<IStoreDatabaseService, StoreDatabaseService>();
         services.AddScoped<IInvoicePdfGenerator, InvoicePdfGenerator>();
+
+        services.Configure<S3StorageOptions>(
+    configuration.GetSection("S3Storage"));
+
+        services.AddScoped<IFileStorageService, S3FileStorageService>();
+
+        services.AddScoped<ICustomerPasswordHasher, CustomerPasswordHasher>();
+        services.AddScoped<ICustomerTokenService, CustomerTokenService>();
 
         return services;
     }

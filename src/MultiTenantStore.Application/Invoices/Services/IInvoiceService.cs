@@ -19,4 +19,8 @@ public interface IInvoiceService
     Task<ApiResponseDto<InvoicePdfDto>> GeneratePdfAsync(
         Guid invoiceId,
         CancellationToken cancellationToken = default);
+
+    Task<ApiResponseDto<InvoiceDto>> GenerateAndUploadPdfAsync(
+    Guid invoiceId,
+    CancellationToken cancellationToken = default);
 }

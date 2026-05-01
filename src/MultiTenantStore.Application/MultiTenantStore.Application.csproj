@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <Folder Include="Carts\Interfaces\" />
+    <Folder Include="Customers\Interfaces\" />
   </ItemGroup>
 </Project>
 

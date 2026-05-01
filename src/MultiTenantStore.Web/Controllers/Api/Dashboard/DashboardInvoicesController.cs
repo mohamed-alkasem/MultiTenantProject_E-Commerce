@@ -78,4 +78,20 @@ public sealed class DashboardInvoicesController : ControllerBase
             result.Data.ContentType,
             result.Data.FileName);
     }
+    [HttpPost("{invoiceId:guid}/generate-pdf")]
+    public async Task<IActionResult> GenerateAndUploadPdf(
+    Guid invoiceId,
+    CancellationToken cancellationToken)
+    {
+        var result = await _invoiceService.GenerateAndUploadPdfAsync(
+            invoiceId,
+            cancellationToken);
+
+        if (!result.Success)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }

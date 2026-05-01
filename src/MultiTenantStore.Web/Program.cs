@@ -1,9 +1,11 @@
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 using MultiTenantStore.Application;
+using MultiTenantStore.Application.Customers.Services;
 using MultiTenantStore.Infrastructure;
 using MultiTenantStore.Persistence;
 using MultiTenantStore.Web.Extensions;
+using MultiTenantStore.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +45,9 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 });
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentCustomerService, CurrentCustomerService>();
 
 var app = builder.Build();
 
