@@ -16,14 +16,14 @@ public sealed class CurrentCustomerService : ICurrentCustomerService
     {
         get
         {
-            var value = _httpContextAccessor
-                .HttpContext?
-                .User
-                .FindFirstValue("customer_id");
+            // Try JWT/cookie claims first
+            var claimValue = _httpContextAccessor?.HttpContext?.User.FindFirstValue("customer_id");
+            if (Guid.TryParse(claimValue, out var fromClaims))
+                return fromClaims;
 
-            return Guid.TryParse(value, out var customerId)
-                ? customerId
-                : null;
+            // Fallback: MVC storefront uses session-based auth
+            var sessionValue = _httpContextAccessor?.HttpContext?.Session.GetString("CustomerId");
+            return Guid.TryParse(sessionValue, out var fromSession) ? fromSession : null;
         }
     }
 

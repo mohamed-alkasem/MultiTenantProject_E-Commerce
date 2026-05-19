@@ -11,4 +11,6 @@ public sealed class OrderListDto
     public decimal TotalAmount { get; init; }
     public required string Currency { get; init; }
     public DateTime CreatedAt { get; init; }
+    public string? InvoiceNumber { get; init; }
+    public string? InvoicePdfUrl { get; init; }
 }

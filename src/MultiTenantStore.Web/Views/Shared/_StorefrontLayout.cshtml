@@ -1,0 +1,221 @@
+@using MultiTenantStore.Web.Areas.Storefront.ViewModels
+@{
+    var ctx = ViewData["StorefrontContext"] as StorefrontContext ?? new StorefrontContext();
+    bool isAr = ctx.Lang == "ar";
+    string dir = isAr ? "rtl" : "ltr";
+    string bootstrapCss = isAr
+        ? "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css"
+        : "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css";
+    string primary = ctx.PrimaryColor;
+    string secondary = ctx.SecondaryColor;
+    string storeSlug = ctx.StoreSlug;
+}
+<!DOCTYPE html>
+<html lang="@ctx.Lang" dir="@dir">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ctx.StoreName - @ViewData["Title"]</title>
+    <link rel="stylesheet" href="@bootstrapCss" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" />
+    <style>
+        :root { --store-primary: @primary; --store-secondary: @secondary; }
+        * { font-family: 'Tajawal', sans-serif; }
+        body { background: #f8f9fa; }
+
+        .store-navbar {
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .store-navbar .navbar-brand { font-size: 1.2rem; font-weight: 700; color: var(--store-primary) !important; }
+        .store-navbar .logo-img { max-height: 42px; max-width: 130px; object-fit: contain; }
+        .nav-link { color: #4a5568 !important; font-size: 0.88rem; }
+        .nav-link:hover { color: var(--store-primary) !important; }
+
+        .cart-btn { position: relative; }
+        .cart-badge {
+            position: absolute; top: -6px; @(isAr ? "left" : "right"): -6px;
+            background: var(--store-primary); color: white; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 0.6rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .product-card {
+            border: none; box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+            border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s; overflow: hidden;
+        }
+        .product-card:hover { transform: translateY(-3px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+        .product-card .card-img-top { height: 200px; object-fit: cover; }
+        .product-img-placeholder {
+            height: 200px; background: linear-gradient(135deg,#f0f2f5,#e2e8f0);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; color: #cbd5e0;
+        }
+        .product-price { color: var(--store-primary); font-weight: 700; font-size: 1rem; }
+        .product-price-old { text-decoration: line-through; color: #a0aec0; font-size: 0.82rem; }
+
+        .btn-add-cart {
+            background: var(--store-primary); color: white; border: none;
+            border-radius: 8px; padding: 0.4rem 1rem; font-size: 0.82rem; transition: all 0.15s;
+            width: 100%;
+        }
+        .btn-add-cart:hover { filter: brightness(0.9); color: white; }
+
+        .category-pill {
+            background: #fff; border: 2px solid #e2e8f0; border-radius: 24px;
+            padding: 0.35rem 1rem; font-size: 0.82rem; color: #4a5568;
+            text-decoration: none; transition: all 0.15s;
+        }
+        .category-pill:hover, .category-pill.active {
+            border-color: var(--store-primary); background: var(--store-primary); color: white;
+        }
+
+        .store-hero {
+            background: linear-gradient(135deg, var(--store-primary), var(--store-secondary));
+            color: white; padding: 2.5rem 0;
+        }
+
+        .store-footer {
+            background: #2d3748; color: rgba(255,255,255,0.7);
+            padding: 1.75rem 0; margin-top: 3.5rem; font-size: 0.85rem;
+        }
+
+        .alert { border-radius: 10px; border: none; }
+        .card { border: none; box-shadow: 0 1px 6px rgba(0,0,0,0.06); border-radius: 12px; }
+        .btn { border-radius: 8px; }
+        .form-control, .form-select { border-radius: 8px; }
+        .form-control:focus, .form-select:focus { border-color: var(--store-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--store-primary) 20%, transparent); }
+        .btn-primary { background: var(--store-primary); border-color: var(--store-primary); }
+        .btn-primary:hover { filter: brightness(0.9); border-color: transparent; }
+
+        @@media (max-width: 768px) {
+            .product-card .card-img-top, .product-img-placeholder { height: 160px; }
+        }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+<nav class="store-navbar navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center gap-2" href="/s/@storeSlug">
+            @if (!string.IsNullOrEmpty(ctx.LogoUrl))
+            {
+                <img src="@ctx.LogoUrl" alt="@ctx.StoreName" class="logo-img" />
+            }
+            else
+            {
+                @ctx.StoreName
+            }
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#storeNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="storeNav">
+            <ul class="navbar-nav @(isAr ? "me-auto" : "ms-auto") mb-2 mb-lg-0 gap-1">
+                <li class="nav-item">
+                    <a class="nav-link" href="/s/@storeSlug">@(isAr ? "الرئيسية" : "Home")</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/s/@storeSlug/Products">@(isAr ? "المنتجات" : "Products")</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                @* Language toggle *@
+                <form method="post" action="/s/@storeSlug/Customer/SetLanguage">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="lang" value="@(isAr ? "en" : "ar")" />
+                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                    <button type="submit" class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem; padding:0.25rem 0.6rem;">
+                        @(isAr ? "EN" : "عر")
+                    </button>
+                </form>
+
+                @* Cart *@
+                <a href="/s/@storeSlug/Cart" class="btn btn-sm btn-outline-secondary cart-btn">
+                    <i class="bi bi-cart3"></i>
+                    @if (ctx.CartCount > 0)
+                    {
+                        <span class="cart-badge">@(ctx.CartCount > 9 ? "9+" : ctx.CartCount.ToString())</span>
+                    }
+                </a>
+
+                @* Customer account *@
+                @if (ctx.IsCustomerLoggedIn)
+                {
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i>
+                            <span class="d-none d-md-inline">@ctx.CustomerName</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="/s/@storeSlug/Customer/Orders">
+                                    <i class="bi bi-bag me-2"></i>@(isAr ? "طلباتي" : "My Orders")
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <form method="post" action="/s/@storeSlug/Customer/Logout">
+                                    @Html.AntiForgeryToken()
+                                    <button class="dropdown-item text-danger" type="submit">
+                                        <i class="bi bi-box-arrow-right me-2"></i>@(isAr ? "خروج" : "Logout")
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a href="/s/@storeSlug/Customer/Login" class="btn btn-sm btn-primary px-3">
+                        <i class="bi bi-person me-1"></i>@(isAr ? "دخول" : "Login")
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</nav>
+
+@{
+    var successMsg = TempData["SuccessMessage"] as string;
+    var errorMsg = TempData["ErrorMessage"] as string;
+}
+@if (!string.IsNullOrEmpty(successMsg))
+{
+    <div class="container pt-3">
+        <div class="alert alert-success alert-dismissible fade show py-2">
+            <i class="bi bi-check-circle-fill me-1"></i> @successMsg
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+}
+@if (!string.IsNullOrEmpty(errorMsg))
+{
+    <div class="container pt-3">
+        <div class="alert alert-danger alert-dismissible fade show py-2">
+            <i class="bi bi-exclamation-circle-fill me-1"></i> @errorMsg
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+}
+
+@RenderBody()
+
+<footer class="store-footer">
+    <div class="container text-center">
+        <div class="fw-medium text-white mb-1">@ctx.StoreName</div>
+        <div>@(isAr ? "جميع الحقوق محفوظة" : "All rights reserved") &copy; @DateTime.Now.Year</div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

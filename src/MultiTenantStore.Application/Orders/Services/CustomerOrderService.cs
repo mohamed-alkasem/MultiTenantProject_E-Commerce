@@ -79,7 +79,9 @@ public sealed class CustomerOrderService : ICustomerOrderService
             ShippingStatus = order.ShippingStatus.ToString(),
             TotalAmount = order.TotalAmount,
             Currency = order.Currency,
-            CreatedAt = order.CreatedAt
+            CreatedAt = order.CreatedAt,
+            InvoiceNumber = order.Invoice?.InvoiceNumber,
+            InvoicePdfUrl = order.Invoice?.PdfUrl,
         };
     }
 

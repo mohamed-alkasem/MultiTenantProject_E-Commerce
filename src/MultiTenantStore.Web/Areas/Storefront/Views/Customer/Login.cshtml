@@ -1,0 +1,51 @@
+@model CustomerLoginViewModel
+@{
+    var s = Model.Store;
+    bool isAr = s.IsAr;
+    string slug = s.StoreSlug;
+    ViewData["Title"] = isAr ? "تسجيل الدخول" : "Login";
+}
+
+<div class="container page-section">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-5">
+            <div class="card p-1">
+                <div class="card-body">
+                    <h4 class="fw-bold mb-1 text-center">@(isAr ? "تسجيل الدخول" : "Login")</h4>
+                    <p class="text-muted text-center small mb-4">
+                        @(isAr ? "ادخل إلى حسابك للمتابعة" : "Sign in to your account")
+                    </p>
+
+                    <form asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="ReturnUrl" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3 @(ViewData.ModelState.IsValid ? "d-none" : "")"></div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">@(isAr ? "البريد الإلكتروني" : "Email")</label>
+                            <input asp-for="Email" type="email" class="form-control" dir="ltr"
+                                   placeholder="example@email.com" autofocus required />
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-medium">@(isAr ? "كلمة المرور" : "Password")</label>
+                            <input asp-for="Password" type="password" class="form-control"
+                                   placeholder="••••••••" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2">
+                            @(isAr ? "تسجيل الدخول" : "Sign In")
+                        </button>
+                    </form>
+
+                    <hr />
+                    <div class="text-center small">
+                        @(isAr ? "ليس لديك حساب؟" : "Don't have an account?")
+                        <a href="/s/@slug/Customer/Register" class="fw-medium">
+                            @(isAr ? "إنشاء حساب" : "Register")
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

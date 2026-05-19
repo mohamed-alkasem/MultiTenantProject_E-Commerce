@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MultiTenantStore.Application.Auth.DTOs;
 using MultiTenantStore.Application.Auth.Interfaces;
+using MultiTenantStore.Domain.Enums;
 using MultiTenantStore.Persistence.Contexts;
 using MultiTenantStore.Web.ViewModels;
 
@@ -19,9 +20,25 @@ public sealed class HomeController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index()
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        return View();
+        var stores = await _db.Stores
+            .AsNoTracking()
+            .Where(s => s.Status == StoreStatus.Active && s.DeletedAt == null)
+            .OrderBy(s => s.StoreName)
+            .Select(s => new StoreCardViewModel
+            {
+                Slug = s.Slug,
+                StoreName = s.StoreName,
+                StoreNameAr = s.StoreNameAr,
+                LogoUrl = s.Branding != null ? s.Branding.LogoUrl : null,
+                PrimaryColor = s.Branding != null && s.Branding.PrimaryColor != null
+                    ? s.Branding.PrimaryColor : "#3498db"
+            })
+            .ToListAsync(cancellationToken);
+
+        var vm = new StoreDirectoryViewModel { Stores = stores };
+        return View(vm);
     }
 
     [HttpGet]

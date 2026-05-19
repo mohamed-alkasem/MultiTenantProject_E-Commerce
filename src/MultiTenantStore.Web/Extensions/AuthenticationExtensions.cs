@@ -90,6 +90,14 @@ public static class AuthenticationExtensions
                 options.SlidingExpiration = true;
                 options.ExpireTimeSpan = TimeSpan.FromHours(8);
                 options.Cookie.Name = ".PlatformAdmin.Session";
+            })
+            .AddCookie("Storefront.Customer", options =>
+            {
+                options.LoginPath = "/s/{storeSlug}/Customer/Login";
+                options.SlidingExpiration = true;
+                options.ExpireTimeSpan = TimeSpan.FromDays(7);
+                options.Cookie.Name = ".Storefront.Customer";
+                options.Cookie.HttpOnly = true;
             });
 
         return services;

@@ -1,0 +1,150 @@
+@model ProductDetailsViewModel
+@{
+    var s = Model.Store;
+    bool isAr = s.IsAr;
+    string slug = s.StoreSlug;
+    var p = Model.Product;
+    ViewData["Title"] = p.Name;
+}
+
+<div class="container page-section">
+    @* Breadcrumb *@
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb" style="font-size:0.83rem;">
+            <li class="breadcrumb-item"><a href="/s/@slug">@(isAr ? "الرئيسية" : "Home")</a></li>
+            <li class="breadcrumb-item"><a href="/s/@slug/Products">@(isAr ? "المنتجات" : "Products")</a></li>
+            <li class="breadcrumb-item active">@p.Name</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        @* Images *@
+        <div class="col-12 col-md-5">
+            @if (p.Images.Any())
+            {
+                var main = p.Images.FirstOrDefault(i => i.IsPrimary) ?? p.Images.First();
+                <div class="card overflow-hidden mb-2">
+                    <img src="@main.ImageUrl" alt="@p.Name" id="mainImage"
+                         class="img-fluid" style="max-height:360px; object-fit:contain; width:100%;" />
+                </div>
+                @if (p.Images.Count > 1)
+                {
+                    <div class="d-flex gap-2 flex-wrap">
+                        @foreach (var img in p.Images.Take(6))
+                        {
+                            <img src="@img.ImageUrl" alt="@p.Name"
+                                 onclick="document.getElementById('mainImage').src=this.src"
+                                 class="rounded" style="width:60px;height:60px;object-fit:cover;cursor:pointer;border:2px solid #e2e8f0;" />
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="card product-img-placeholder" style="height:320px;">
+                    <i class="bi bi-image"></i>
+                </div>
+            }
+        </div>
+
+        @* Details *@
+        <div class="col-12 col-md-7">
+            <div class="mb-1 text-muted small">
+                <a href="/s/@slug/Products?categoryId=@p.CategoryId" class="text-decoration-none text-muted">
+                    @p.CategoryName
+                </a>
+            </div>
+            <h2 class="fw-bold mb-2">@p.Name</h2>
+
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <span class="product-price" style="font-size:1.4rem;">@p.Price.ToString("N2")</span>
+                @if (p.CompareAtPrice.HasValue && p.CompareAtPrice > p.Price)
+                {
+                    <span class="product-price-old" style="font-size:1rem;">@p.CompareAtPrice.Value.ToString("N2")</span>
+                    <span class="badge bg-danger">-@((int)Math.Round((1 - (double)p.Price / (double)p.CompareAtPrice.Value) * 100))%</span>
+                }
+            </div>
+
+            @if (!string.IsNullOrEmpty(p.ShortDescription))
+            {
+                <p class="text-muted mb-3">@p.ShortDescription</p>
+            }
+
+            @* Stock *@
+            <div class="mb-3">
+                @if (p.StockQuantity > 0)
+                {
+                    <span class="text-success small fw-medium">
+                        <i class="bi bi-check-circle me-1"></i>@(isAr ? "متوفر في المخزن" : "In Stock")
+                        (@p.StockQuantity)
+                    </span>
+                }
+                else
+                {
+                    <span class="text-danger small fw-medium">
+                        <i class="bi bi-x-circle me-1"></i>@(isAr ? "غير متوفر" : "Out of Stock")
+                    </span>
+                }
+            </div>
+
+            @* Variants *@
+            @if (p.Variants.Any())
+            {
+                <div class="mb-3">
+                    <label class="fw-medium small mb-2">@(isAr ? "الخيارات" : "Options")</label>
+                    <div class="d-flex flex-wrap gap-2" id="variantContainer">
+                        @foreach (var v in p.Variants.Where(v => v.StockQuantity > 0))
+                        {
+                            <label class="variant-option">
+                                <input type="radio" name="variantId" value="@v.Id" class="d-none variant-radio" />
+                                <span class="category-pill" style="cursor:pointer;">@v.Name (@v.Price.ToString("N2"))</span>
+                            </label>
+                        }
+                    </div>
+                </div>
+            }
+
+            @* Add to cart *@
+            @if (p.StockQuantity > 0)
+            {
+                <form method="post" action="/s/@slug/Cart/Add" class="d-flex gap-2 align-items-center mb-3">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productId" value="@p.Id" />
+                    <input type="hidden" name="variantId" id="selectedVariantId" value="" />
+                    <div class="input-group" style="width:110px;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                onclick="let q=document.getElementById('qty'); q.value=Math.max(1,+q.value-1)">-</button>
+                        <input type="number" name="quantity" id="qty" value="1" min="1" max="@p.StockQuantity"
+                               class="form-control form-control-sm text-center" />
+                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                onclick="let q=document.getElementById('qty'); q.value=Math.min(@p.StockQuantity,+q.value+1)">+</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-cart-plus me-1"></i>@(isAr ? "أضف إلى السلة" : "Add to Cart")
+                    </button>
+                </form>
+            }
+
+            @* Description *@
+            @if (!string.IsNullOrEmpty(p.Description))
+            {
+                <div class="mt-3 pt-3 border-top">
+                    <h6 class="fw-bold mb-2">@(isAr ? "الوصف" : "Description")</h6>
+                    <div class="text-muted" style="font-size:0.9rem; line-height:1.7;">@p.Description</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.querySelectorAll('.variant-radio').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            document.getElementById('selectedVariantId').value = this.value;
+            document.querySelectorAll('.variant-option span').forEach(s => s.classList.remove('active'));
+            this.nextElementSibling.classList.add('active');
+        });
+    });
+</script>
+}

@@ -44,3 +44,17 @@ public sealed class PlanOptionViewModel
     public decimal PriceMonthly { get; set; }
     public decimal PriceYearly { get; set; }
 }
+
+public sealed class StoreDirectoryViewModel
+{
+    public List<StoreCardViewModel> Stores { get; set; } = new();
+}
+
+public sealed class StoreCardViewModel
+{
+    public string Slug { get; set; } = default!;
+    public string StoreName { get; set; } = default!;
+    public string? StoreNameAr { get; set; }
+    public string? LogoUrl { get; set; }
+    public string PrimaryColor { get; set; } = "#3498db";
+}

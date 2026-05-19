@@ -16,6 +16,15 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddWebAuthentication(builder.Configuration);
 
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(o =>
+{
+    o.Cookie.Name = ".Storefront.Session";
+    o.Cookie.HttpOnly = true;
+    o.Cookie.IsEssential = true;
+    o.IdleTimeout = TimeSpan.FromHours(2);
+});
+
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
@@ -59,15 +68,27 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 
+app.UseMiddleware<MultiTenantStore.Web.Middlewares.SubdomainStorefrontMiddleware>();
+
 app.UseRouting();
 
 app.UseAuthentication();
+
+app.UseSession();
+
+app.UseMiddleware<MultiTenantStore.Web.Middlewares.StorefrontTenantMiddleware>();
 
 app.UseTenantResolution();
 
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Storefront dev route: /s/{storeSlug}/products, /s/{storeSlug}/cart, etc.
+app.MapControllerRoute(
+    name: "storefront_dev",
+    pattern: "s/{storeSlug}/{controller=Home}/{action=Index}/{id?}",
+    defaults: new { area = "Storefront" });
 
 app.MapControllerRoute(
     name: "areas",

@@ -1,0 +1,143 @@
+@model CheckoutViewModel
+@{
+    var s = Model.Store;
+    bool isAr = s.IsAr;
+    string slug = s.StoreSlug;
+    ViewData["Title"] = isAr ? "إتمام الطلب" : "Checkout";
+}
+
+<div class="container page-section">
+    <h4 class="fw-bold mb-4">
+        <i class="bi bi-bag-check me-2"></i>@(isAr ? "إتمام الطلب" : "Checkout")
+    </h4>
+
+    <form method="post" asp-action="PlaceOrder">
+        @Html.AntiForgeryToken()
+        <div class="row g-4">
+            <div class="col-12 col-lg-7">
+
+                @* Contact *@
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="bi bi-person me-2 text-primary"></i>@(isAr ? "معلومات الاتصال" : "Contact Information")
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="form-label">@(isAr ? "الاسم الأول" : "First Name") <span class="text-danger">*</span></label>
+                                <input asp-for="FirstName" class="form-control" required />
+                                <span asp-validation-for="FirstName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">@(isAr ? "الاسم الأخير" : "Last Name") <span class="text-danger">*</span></label>
+                                <input asp-for="LastName" class="form-control" required />
+                                <span asp-validation-for="LastName" class="text-danger small"></span>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(isAr ? "البريد الإلكتروني" : "Email")</label>
+                                <input asp-for="Email" type="email" class="form-control" dir="ltr" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(isAr ? "رقم الهاتف" : "Phone") <span class="text-danger">*</span></label>
+                                <input asp-for="Phone" class="form-control" dir="ltr" required />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Shipping Address *@
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="bi bi-geo-alt me-2 text-success"></i>@(isAr ? "عنوان الشحن" : "Shipping Address")
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">@(isAr ? "الدولة" : "Country") <span class="text-danger">*</span></label>
+                                <input asp-for="Country" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(isAr ? "المدينة" : "City") <span class="text-danger">*</span></label>
+                                <input asp-for="City" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(isAr ? "الحي" : "District")</label>
+                                <input asp-for="District" class="form-control" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">@(isAr ? "الرمز البريدي" : "Postal Code")</label>
+                                <input asp-for="PostalCode" class="form-control" dir="ltr" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">@(isAr ? "العنوان (السطر الأول)" : "Address Line 1") <span class="text-danger">*</span></label>
+                                <input asp-for="AddressLine1" class="form-control" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">@(isAr ? "العنوان (السطر الثاني)" : "Address Line 2")</label>
+                                <input asp-for="AddressLine2" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Payment *@
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <i class="bi bi-credit-card me-2 text-warning"></i>@(isAr ? "طريقة الدفع" : "Payment Method")
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="PaymentMethod" id="cod"
+                                   value="CashOnDelivery" checked />
+                            <label class="form-check-label fw-medium" for="cod">
+                                <i class="bi bi-cash me-2 text-success"></i>
+                                @(isAr ? "الدفع عند الاستلام" : "Cash on Delivery")
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            @* Order Summary *@
+            <div class="col-12 col-lg-5">
+                <div class="card sticky-top" style="top:80px;">
+                    <div class="card-header fw-semibold">@(isAr ? "ملخص الطلب" : "Order Summary")</div>
+                    <div class="card-body">
+                        @if (Model.Cart?.Items.Any() == true)
+                        {
+                            @foreach (var item in Model.Cart.Items)
+                            {
+                                <div class="d-flex justify-content-between mb-2">
+                                    <div>
+                                        <span class="fw-medium" style="font-size:0.88rem;">@item.ProductName</span>
+                                        <span class="text-muted small"> ×@item.Quantity</span>
+                                    </div>
+                                    <span class="fw-medium">@item.LineTotal.ToString("N2")</span>
+                                </div>
+                            }
+                            <hr />
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">@(isAr ? "المجموع الفرعي" : "Subtotal")</span>
+                                <span>@Model.Cart.Subtotal.ToString("N2")</span>
+                            </div>
+                            <div class="d-flex justify-content-between fw-bold mt-2">
+                                <span>@(isAr ? "الإجمالي" : "Total")</span>
+                                <span class="product-price" style="font-size:1.1rem;">@Model.Cart.TotalAmount.ToString("N2")</span>
+                            </div>
+                        }
+                        <div class="mt-3">
+                            <div asp-validation-summary="All" class="alert alert-danger py-2 mb-3 @(ViewData.ModelState.IsValid ? "d-none" : "")"></div>
+                            <button type="submit" class="btn btn-primary w-100 py-2">
+                                <i class="bi bi-check-circle me-2"></i>@(isAr ? "تأكيد الطلب" : "Place Order")
+                            </button>
+                            <a href="/s/@slug/Cart" class="btn btn-outline-secondary w-100 mt-2">
+                                @(isAr ? "العودة إلى السلة" : "Back to Cart")
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

@@ -1,8 +1,37 @@
 @model SubscriptionViewModel
+@{
+    ViewData["Title"] = "اشتراكي";
+    bool isActive = Model.Status == "Active";
+    bool isTrial = Model.Status == "Trial";
+    bool isExpired = Model.Status is "Expired" or "Cancelled";
 
-<div class="mb-4">
-    <h5 class="mb-0 fw-bold">اشتراكي</h5>
-    <p class="text-muted small mb-0">تفاصيل خطة اشتراكك الحالية</p>
+    string statusBadge = Model.Status switch
+    {
+        "Active" => "bg-success",
+        "Trial" => "bg-info text-dark",
+        "Expired" => "bg-danger",
+        "Cancelled" => "bg-secondary",
+        _ => "bg-warning text-dark"
+    };
+    string statusAr = Model.Status switch
+    {
+        "Active" => "نشط",
+        "Trial" => "تجريبي",
+        "Expired" => "منتهي",
+        "Cancelled" => "ملغى",
+        _ => Model.Status
+    };
+}
+
+<div class="mb-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+        <h5 class="mb-0 fw-bold">اشتراكي</h5>
+        <p class="text-muted small mb-0">تفاصيل خطة اشتراكك الحالية</p>
+    </div>
+    @if (Model.HasSubscription)
+    {
+        <span class="badge @statusBadge px-3 py-2" style="font-size:0.85rem;">@statusAr</span>
+    }
 </div>
 
 @if (!Model.HasSubscription)
@@ -17,30 +46,41 @@
 }
 else
 {
+    @* Restriction banner for active paid *@
+    @if (isActive && Model.PriceMonthly > 0)
+    {
+        <div class="alert alert-info d-flex align-items-start gap-2 mb-4 py-2">
+            <i class="bi bi-lock-fill mt-1 text-primary"></i>
+            <div>
+                <strong>اشتراك مدفوع نشط</strong> — لا يمكن تغيير الخطة أثناء الاشتراك الفعّال.
+                للترقية أو الإلغاء، تواصل مع الدعم.
+            </div>
+        </div>
+    }
+    @if (isTrial)
+    {
+        <div class="alert alert-warning d-flex align-items-start gap-2 mb-4 py-2">
+            <i class="bi bi-clock-history mt-1 text-warning"></i>
+            <div>
+                <strong>فترة تجريبية</strong> — يمكنك الترقية إلى خطة مدفوعة في أي وقت عبر التواصل مع الدعم.
+            </div>
+        </div>
+    }
+    @if (isExpired)
+    {
+        <div class="alert alert-danger d-flex align-items-start gap-2 mb-4 py-2">
+            <i class="bi bi-exclamation-circle mt-1"></i>
+            <div>
+                <strong>انتهى الاشتراك</strong> — تواصل مع الإدارة لتجديد اشتراكك واستعادة صلاحيات المتجر.
+            </div>
+        </div>
+    }
+
     <div class="row g-3">
         <div class="col-12 col-lg-7">
             <div class="card mb-3">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <span><i class="bi bi-credit-card me-2 text-primary"></i>تفاصيل الخطة</span>
-                    @{
-                        var statusBadge = Model.Status switch
-                        {
-                            "Active" => "bg-success",
-                            "Trial" => "bg-info text-dark",
-                            "Expired" => "bg-danger",
-                            "Cancelled" => "bg-secondary",
-                            _ => "bg-warning text-dark"
-                        };
-                        var statusAr = Model.Status switch
-                        {
-                            "Active" => "نشط",
-                            "Trial" => "تجريبي",
-                            "Expired" => "منتهي",
-                            "Cancelled" => "ملغى",
-                            _ => Model.Status
-                        };
-                    }
-                    <span class="badge @statusBadge">@statusAr</span>
+                <div class="card-header">
+                    <i class="bi bi-credit-card me-2 text-primary"></i>تفاصيل الخطة
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -48,7 +88,10 @@ else
                             <p class="text-muted small mb-1">اسم الخطة</p>
                             <p class="fw-bold mb-0">
                                 @(Model.PlanNameAr ?? Model.PlanName)
-                                <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">@Model.PlanCode</span>
+                                @if (!string.IsNullOrEmpty(Model.PlanCode))
+                                {
+                                    <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">@Model.PlanCode</span>
+                                }
                             </p>
                         </div>
                         <div class="col-sm-6">
@@ -68,8 +111,12 @@ else
                         {
                             <div class="col-sm-6">
                                 <p class="text-muted small mb-1">تاريخ الانتهاء</p>
-                                <p class="fw-medium mb-0 @(Model.EndDate.Value < DateTime.UtcNow ? "text-danger" : "")">
+                                <p class="fw-medium mb-0 @(Model.EndDate.Value < DateTime.UtcNow ? "text-danger fw-bold" : "")">
                                     @Model.EndDate.Value.ToString("yyyy/MM/dd")
+                                    @if (Model.EndDate.Value < DateTime.UtcNow)
+                                    {
+                                        <span class="badge bg-danger ms-1">منتهي</span>
+                                    }
                                 </p>
                             </div>
                         }
@@ -77,7 +124,9 @@ else
                         {
                             <div class="col-sm-6">
                                 <p class="text-muted small mb-1">نهاية الفترة التجريبية</p>
-                                <p class="fw-medium mb-0 text-info">@Model.TrialEndsAt.Value.ToString("yyyy/MM/dd")</p>
+                                <p class="fw-medium mb-0 @(Model.TrialEndsAt.Value < DateTime.UtcNow ? "text-danger" : "text-info")">
+                                    @Model.TrialEndsAt.Value.ToString("yyyy/MM/dd")
+                                </p>
                             </div>
                         }
                         @if (Model.NextBillingAt.HasValue)
@@ -103,7 +152,9 @@ else
                             </div>
                             <span class="fw-medium">المنتجات</span>
                         </div>
-                        <span class="badge bg-primary rounded-pill fs-6">@Model.MaxProducts</span>
+                        <span class="badge bg-primary rounded-pill fs-6">
+                            @(Model.MaxProducts == 0 ? "∞" : Model.MaxProducts.ToString())
+                        </span>
                     </div>
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center gap-2">
@@ -112,7 +163,9 @@ else
                             </div>
                             <span class="fw-medium">أعضاء الفريق</span>
                         </div>
-                        <span class="badge bg-success rounded-pill fs-6">@Model.MaxStaffUsers</span>
+                        <span class="badge bg-success rounded-pill fs-6">
+                            @(Model.MaxStaffUsers == 0 ? "∞" : Model.MaxStaffUsers.ToString())
+                        </span>
                     </div>
                 </div>
             </div>

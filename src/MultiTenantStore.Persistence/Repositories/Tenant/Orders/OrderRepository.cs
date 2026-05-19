@@ -106,6 +106,7 @@ public sealed class OrderRepository : TenantRepository<Order>, IOrderRepository
     CancellationToken cancellationToken = default)
     {
         return _context.Orders
+            .Include(x => x.Invoice)
             .Where(x => x.CustomerId == customerId &&
                         x.DeletedAt == null)
             .OrderByDescending(x => x.CreatedAt)
