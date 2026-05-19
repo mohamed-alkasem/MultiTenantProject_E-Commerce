@@ -1,0 +1,157 @@
+@model BrandingViewModel
+
+<div class="mb-4">
+    <h5 class="mb-0 fw-bold">هوية المتجر</h5>
+    <p class="text-muted small mb-0">تخصيص شعار متجرك وبياناته</p>
+</div>
+
+<form asp-action="Update" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div class="row g-3">
+        <div class="col-12 col-lg-8">
+
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-image me-2 text-primary"></i>شعار المتجر</div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                    {
+                        <div class="mb-3">
+                            <img src="@Model.LogoUrl" alt="شعار المتجر"
+                                 class="img-thumbnail"
+                                 style="max-height:120px; max-width:240px; object-fit:contain;" />
+                            <input type="hidden" name="LogoUrl" value="@Model.LogoUrl" />
+                        </div>
+                    }
+                    <div>
+                        <label class="form-label fw-medium">
+                            @(string.IsNullOrEmpty(Model.LogoUrl) ? "رفع شعار المتجر" : "تغيير الشعار")
+                        </label>
+                        <input type="file" name="LogoFile" class="form-control" accept=".jpg,.jpeg,.png,.webp,.svg" />
+                        <div class="form-text">الصيغ المدعومة: JPG, PNG, WebP, SVG — الحجم الأقصى: 2 ميجابايت</div>
+                        <span asp-validation-for="LogoFile" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-palette me-2 text-info"></i>الألوان</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="PrimaryColor" class="form-label fw-medium">اللون الرئيسي</label>
+                            <div class="input-group">
+                                <input asp-for="PrimaryColor" type="color"
+                                       class="form-control form-control-color"
+                                       value="@(Model.PrimaryColor ?? "#3498db")"
+                                       style="width:50px;" />
+                                <input type="text" class="form-control font-monospace"
+                                       value="@(Model.PrimaryColor ?? "#3498db")"
+                                       oninput="this.previousElementSibling.value=this.value"
+                                       name="_PrimaryColorText" dir="ltr" placeholder="#3498db" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SecondaryColor" class="form-label fw-medium">اللون الثانوي</label>
+                            <div class="input-group">
+                                <input asp-for="SecondaryColor" type="color"
+                                       class="form-control form-control-color"
+                                       value="@(Model.SecondaryColor ?? "#2ecc71")"
+                                       style="width:50px;" />
+                                <input type="text" class="form-control font-monospace"
+                                       value="@(Model.SecondaryColor ?? "#2ecc71")"
+                                       oninput="this.previousElementSibling.value=this.value"
+                                       name="_SecondaryColorText" dir="ltr" placeholder="#2ecc71" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-envelope me-2 text-success"></i>بيانات التواصل</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="ContactEmail" class="form-label fw-medium">البريد الإلكتروني</label>
+                            <input asp-for="ContactEmail" class="form-control" type="email" placeholder="info@store.com" dir="ltr" />
+                            <span asp-validation-for="ContactEmail" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="ContactPhone" class="form-label fw-medium">رقم الهاتف</label>
+                            <input asp-for="ContactPhone" class="form-control" placeholder="+966 5x xxx xxxx" dir="ltr" />
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="Address" class="form-label fw-medium">عنوان المتجر</label>
+                            <textarea asp-for="Address" class="form-control" rows="2"
+                                      placeholder="المملكة العربية السعودية، الرياض..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-eye me-2 text-secondary"></i>معاينة</div>
+                <div class="card-body text-center">
+                    <div id="logoPreview" class="mb-3">
+                        @if (!string.IsNullOrEmpty(Model.LogoUrl))
+                        {
+                            <img src="@Model.LogoUrl" alt="الشعار"
+                                 style="max-height:80px; max-width:160px; object-fit:contain;" />
+                        }
+                        else
+                        {
+                            <div class="text-muted">
+                                <i class="bi bi-image fs-1 opacity-25 d-block mb-1"></i>
+                                <small>لم يُرفع شعار بعد</small>
+                            </div>
+                        }
+                    </div>
+                    <div class="d-flex justify-content-center gap-2">
+                        <div id="previewPrimary"
+                             style="width:40px;height:40px;border-radius:8px;background:@(Model.PrimaryColor ?? "#3498db");"></div>
+                        <div id="previewSecondary"
+                             style="width:40px;height:40px;border-radius:8px;background:@(Model.SecondaryColor ?? "#2ecc71");"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i> حفظ الهوية
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+    // sync color picker with text input
+    document.querySelectorAll('input[type="color"]').forEach(function(picker) {
+        picker.addEventListener('input', function() {
+            var txt = this.nextElementSibling;
+            if (txt) txt.value = this.value;
+            // update preview
+            if (this.name === 'PrimaryColor') {
+                document.getElementById('previewPrimary').style.background = this.value;
+            } else if (this.name === 'SecondaryColor') {
+                document.getElementById('previewSecondary').style.background = this.value;
+            }
+        });
+    });
+    // logo preview
+    document.querySelector('input[name="LogoFile"]')?.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('logoPreview').innerHTML =
+                    '<img src="' + e.target.result + '" style="max-height:80px;max-width:160px;object-fit:contain;" />';
+            };
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+</script>
+}

@@ -1,0 +1,98 @@
+@model List<CategoryDto>
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h5 class="mb-0 fw-bold">الفئات</h5>
+        <p class="text-muted small mb-0">إدارة فئات المنتجات</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> فئة جديدة
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="text-muted small">@Model.Count فئة</span>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-folder2 fs-1 d-block mb-2 opacity-25"></i>
+                <p class="mb-0">لا توجد فئات حتى الآن</p>
+                <a asp-action="Create" class="btn btn-primary mt-3">إضافة أول فئة</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>اسم الفئة</th>
+                            <th>الرابط</th>
+                            <th>الفئة الأم</th>
+                            <th>الترتيب</th>
+                            <th>الحالة</th>
+                            <th class="text-center">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var category in Model.OrderBy(c => c.SortOrder))
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-medium">@category.Name</div>
+                                    @if (!string.IsNullOrEmpty(category.NameAr))
+                                    {
+                                        <div class="text-muted small">@category.NameAr</div>
+                                    }
+                                </td>
+                                <td class="text-muted small font-monospace">@category.Slug</td>
+                                <td>
+                                    @if (category.ParentCategoryId.HasValue)
+                                    {
+                                        var parent = Model.FirstOrDefault(c => c.Id == category.ParentCategoryId);
+                                        <span class="badge bg-light text-dark border">
+                                            @(parent?.NameAr ?? parent?.Name ?? "—")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">رئيسية</span>
+                                    }
+                                </td>
+                                <td class="text-muted">@category.SortOrder</td>
+                                <td>
+                                    @if (category.IsActive)
+                                    {
+                                        <span class="badge bg-success badge-status">نشطة</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary badge-status">معطّلة</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-1">
+                                        <a asp-action="Edit" asp-route-id="@category.Id"
+                                           class="btn btn-action btn-outline-primary" title="تعديل">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form asp-action="Delete" asp-route-id="@category.Id" method="post"
+                                              onsubmit="return confirm('هل أنت متأكد من حذف هذه الفئة؟')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-action btn-outline-danger" title="حذف">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

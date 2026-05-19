@@ -1,0 +1,105 @@
+@model PlatformSubscriptionsListViewModel
+@{
+    string lang = Context.Request.Cookies["admin_lang"] ?? "ar";
+    bool isAr = lang == "ar";
+    ViewData["Title"] = isAr ? "الاشتراكات" : "Subscriptions";
+
+    string StatusBadge(string s) => s switch
+    {
+        "Active" => "bg-success",
+        "Trial" => "bg-info text-dark",
+        "Expired" => "bg-danger",
+        "Cancelled" => "bg-secondary",
+        _ => "bg-warning text-dark"
+    };
+    string StatusLabel(string s) => (s, isAr) switch
+    {
+        ("Active", true) => "نشط",       ("Active", false) => "Active",
+        ("Trial", true) => "تجريبي",     ("Trial", false) => "Trial",
+        ("Expired", true) => "منتهي",    ("Expired", false) => "Expired",
+        ("Cancelled", true) => "ملغى",   ("Cancelled", false) => "Cancelled",
+        _ => s
+    };
+    string CycleLabel(string s) => (s, isAr) switch
+    {
+        ("Monthly", true) => "شهري",  ("Monthly", false) => "Monthly",
+        ("Yearly", true) => "سنوي",   ("Yearly", false) => "Yearly",
+        _ => s
+    };
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h5 class="fw-bold mb-0">@(isAr ? "الاشتراكات" : "Subscriptions")</h5>
+        <div class="text-muted small">@Model.Subscriptions.Count @(isAr ? "اشتراك" : "subscriptions")</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="search" value="@Model.Search"
+                   class="form-control form-control-sm"
+                   placeholder="@(isAr ? "بحث باسم المتجر أو البريد أو الخطة..." : "Search by store, email, or plan...")" />
+            <button type="submit" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-search"></i>
+            </button>
+            @if (!string.IsNullOrEmpty(Model.Search))
+            {
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+            }
+        </form>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Subscriptions.Any())
+        {
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-credit-card fs-1 d-block mb-2 opacity-25"></i>
+                <p>@(isAr ? "لا توجد اشتراكات" : "No subscriptions found")</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>@(isAr ? "المتجر" : "Store")</th>
+                            <th>@(isAr ? "الخطة" : "Plan")</th>
+                            <th>@(isAr ? "الحالة" : "Status")</th>
+                            <th>@(isAr ? "دورة الفوترة" : "Billing")</th>
+                            <th>@(isAr ? "تاريخ البدء" : "Start Date")</th>
+                            <th>@(isAr ? "تاريخ الانتهاء" : "End Date")</th>
+                            <th>@(isAr ? "التجديد" : "Next Billing")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sub in Model.Subscriptions)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-medium">@sub.StoreName</div>
+                                    <div class="text-muted small">@sub.OwnerEmail</div>
+                                </td>
+                                <td>@(isAr && !string.IsNullOrEmpty(sub.PlanNameAr) ? sub.PlanNameAr : sub.PlanName)</td>
+                                <td>
+                                    <span class="badge @StatusBadge(sub.Status) badge-status">@StatusLabel(sub.Status)</span>
+                                </td>
+                                <td class="text-muted small">@CycleLabel(sub.BillingCycle)</td>
+                                <td class="text-muted small">@sub.StartDate.ToString("yyyy/MM/dd")</td>
+                                <td class="small @(sub.EndDate.HasValue && sub.EndDate.Value < DateTime.UtcNow ? "text-danger" : "text-muted")">
+                                    @(sub.EndDate.HasValue ? sub.EndDate.Value.ToString("yyyy/MM/dd") : "—")
+                                </td>
+                                <td class="text-muted small">
+                                    @(sub.NextBillingAt.HasValue ? sub.NextBillingAt.Value.ToString("yyyy/MM/dd") : "—")
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

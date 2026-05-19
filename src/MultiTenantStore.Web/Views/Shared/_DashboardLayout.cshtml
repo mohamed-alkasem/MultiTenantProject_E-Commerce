@@ -183,6 +183,14 @@
         </a>
 
         <p class="nav-section-label">الإعدادات</p>
+        <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardBranding" ? "active" : "")"
+           asp-area="Dashboard" asp-controller="DashboardBranding" asp-action="Index">
+            <i class="bi bi-palette"></i> هوية المتجر
+        </a>
+        <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardSubscription" ? "active" : "")"
+           asp-area="Dashboard" asp-controller="DashboardSubscription" asp-action="Index">
+            <i class="bi bi-layers"></i> اشتراكي
+        </a>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardSettings" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardSettings" asp-action="Index">
             <i class="bi bi-gear"></i> إعدادات المتجر
@@ -205,7 +213,8 @@
             </span>
             <form asp-area="Dashboard" asp-controller="DashboardAccount" asp-action="Logout" method="post" class="d-inline">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-sm btn-outline-danger">
+                <button type="submit" class="btn btn-sm btn-outline-danger"
+                        onclick="return confirm('هل تريد تسجيل الخروج من لوحة التحكم؟')">
                     <i class="bi bi-box-arrow-left"></i>
                     <span class="d-none d-sm-inline">خروج</span>
                 </button>

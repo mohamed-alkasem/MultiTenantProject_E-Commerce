@@ -139,6 +139,7 @@
                 bool isDashboard = controller == "PlatformDashboard";
                 bool isStores = controller == "PlatformStores";
                 bool isPlans = controller == "PlatformPlans";
+                bool isSubscriptions = controller == "PlatformSubscriptions";
             }
 
             <a asp-area="PlatformAdmin" asp-controller="PlatformDashboard" asp-action="Index"
@@ -155,6 +156,11 @@
                class="nav-link @(isPlans ? "active" : "")">
                 <i class="bi bi-layers"></i>
                 @(isAr ? "خطط الاشتراك" : "Subscription Plans")
+            </a>
+            <a asp-area="PlatformAdmin" asp-controller="PlatformSubscriptions" asp-action="Index"
+               class="nav-link @(isSubscriptions ? "active" : "")">
+                <i class="bi bi-credit-card"></i>
+                @(isAr ? "الاشتراكات" : "Subscriptions")
             </a>
         </nav>
 
@@ -194,8 +200,11 @@
 
                 <form asp-area="PlatformAdmin" asp-controller="AdminAccount" asp-action="Logout" method="post">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-sm btn-outline-danger" title="@(isAr ? "تسجيل الخروج" : "Sign out")">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            title="@(isAr ? "تسجيل الخروج" : "Sign out")"
+                            onclick="return confirm('@(isAr ? "هل تريد تسجيل الخروج؟" : "Are you sure you want to sign out?")')">
                         <i class="bi bi-box-arrow-right"></i>
+                        <span class="d-none d-md-inline" style="font-size:0.8rem;">@(isAr ? "خروج" : "Sign out")</span>
                     </button>
                 </form>
             </div>
