@@ -250,7 +250,10 @@ public sealed class OrderService : IOrderService
                     PaidAt = x.PaidAt
                 })
                 .ToList(),
-            CreatedAt = order.CreatedAt
+            CreatedAt = order.CreatedAt,
+            InvoiceId = order.Invoice?.Id,
+            InvoiceNumber = order.Invoice?.InvoiceNumber,
+            InvoicePdfUrl = order.Invoice?.PdfUrl,
         };
     }
 }

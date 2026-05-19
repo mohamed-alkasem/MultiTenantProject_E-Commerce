@@ -179,7 +179,7 @@
 
         @if (order.Payments.Any())
         {
-            <div class="card">
+            <div class="card mb-3">
                 <div class="card-header"><i class="bi bi-credit-card me-2 text-success"></i>المدفوعات</div>
                 <div class="card-body p-0">
                     @foreach (var payment in order.Payments)
@@ -195,5 +195,53 @@
                 </div>
             </div>
         }
+
+        <div class="card">
+            <div class="card-header"><i class="bi bi-file-earmark-text me-2 text-warning"></i>الفاتورة / Invoice</div>
+            <div class="card-body">
+                @if (!string.IsNullOrEmpty(order.InvoiceNumber))
+                {
+                    <p class="small mb-2">
+                        <span class="text-muted">رقم الفاتورة:</span>
+                        <strong class="ms-1">@order.InvoiceNumber</strong>
+                    </p>
+                    <div class="d-grid gap-2">
+                        @if (!string.IsNullOrEmpty(order.InvoicePdfUrl))
+                        {
+                            <a href="@order.InvoicePdfUrl" target="_blank" class="btn btn-sm btn-success">
+                                <i class="bi bi-download me-1"></i>تحميل PDF / Download PDF
+                            </a>
+                        }
+                        <a asp-area="Dashboard" asp-controller="DashboardInvoices"
+                           asp-action="Details" asp-route-id="@order.InvoiceId"
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye me-1"></i>عرض الفاتورة / View Invoice
+                        </a>
+                        @if (string.IsNullOrEmpty(order.InvoicePdfUrl))
+                        {
+                            <form asp-area="Dashboard" asp-controller="DashboardInvoices"
+                                  asp-action="GeneratePdf" asp-route-id="@order.InvoiceId" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-warning w-100">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i>إنشاء PDF / Generate PDF
+                                </button>
+                            </form>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted small mb-2">لا توجد فاتورة بعد / No invoice yet</p>
+                    <form asp-area="Dashboard" asp-controller="DashboardInvoices"
+                          asp-action="CreateForOrder" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="orderId" value="@order.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-plus-circle me-1"></i>إنشاء فاتورة / Create Invoice
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
     </div>
 </div>

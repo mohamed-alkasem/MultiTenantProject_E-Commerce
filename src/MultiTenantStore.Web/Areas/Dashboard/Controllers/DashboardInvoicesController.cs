@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MultiTenantStore.Application.Invoices.DTOs;
 using MultiTenantStore.Application.Invoices.Services;
 using MultiTenantStore.Web.Areas.Dashboard.ViewModels;
 
@@ -36,6 +37,24 @@ public sealed class DashboardInvoicesController : Controller
         }
 
         return View(new InvoiceDetailsViewModel { Invoice = result.Data });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateForOrder(Guid orderId, CancellationToken cancellationToken)
+    {
+        var invoiceResult = await _invoiceService.CreateForOrderAsync(
+            new CreateInvoiceDto { OrderId = orderId }, cancellationToken);
+
+        if (invoiceResult.Success && invoiceResult.Data is not null)
+        {
+            await _invoiceService.GenerateAndUploadPdfAsync(invoiceResult.Data.Id, cancellationToken);
+            TempData["SuccessMessage"] = "تم إنشاء الفاتورة بنجاح / Invoice created";
+            return RedirectToAction(nameof(Details), new { id = invoiceResult.Data.Id });
+        }
+
+        TempData["ErrorMessage"] = invoiceResult.Message ?? "حدث خطأ أثناء إنشاء الفاتورة";
+        return RedirectToAction("Details", "DashboardOrders", new { area = "Dashboard", id = orderId });
     }
 
     [HttpPost]

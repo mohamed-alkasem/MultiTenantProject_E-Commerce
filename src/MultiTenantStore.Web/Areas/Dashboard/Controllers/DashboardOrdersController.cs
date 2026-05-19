@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MultiTenantStore.Application.Invoices.DTOs;
+using MultiTenantStore.Application.Invoices.Services;
 using MultiTenantStore.Application.Orders.DTOs;
 using MultiTenantStore.Application.Orders.Services;
 using MultiTenantStore.Web.Areas.Dashboard.ViewModels;
@@ -11,10 +13,12 @@ namespace MultiTenantStore.Web.Areas.Dashboard.Controllers;
 public sealed class DashboardOrdersController : Controller
 {
     private readonly IOrderService _orderService;
+    private readonly IInvoiceService _invoiceService;
 
-    public DashboardOrdersController(IOrderService orderService)
+    public DashboardOrdersController(IOrderService orderService, IInvoiceService invoiceService)
     {
         _orderService = orderService;
+        _invoiceService = invoiceService;
     }
 
     public async Task<IActionResult> Index(
@@ -81,8 +85,31 @@ public sealed class DashboardOrdersController : Controller
         var result = await _orderService.UpdatePaymentStatusAsync(
             new UpdatePaymentStatusDto { OrderId = id, PaymentStatus = newStatus }, cancellationToken);
 
-        TempData[result.Success ? "SuccessMessage" : "ErrorMessage"] =
-            result.Success ? "تم تحديث حالة الدفع بنجاح" : (result.Message ?? "حدث خطأ");
+        if (result.Success)
+        {
+            // When payment is confirmed, ensure an invoice exists and its PDF is generated
+            if (newStatus.Equals("Paid", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    var invoiceResult = await _invoiceService.CreateForOrderAsync(
+                        new CreateInvoiceDto { OrderId = id }, cancellationToken);
+
+                    if (invoiceResult.Success && invoiceResult.Data is not null
+                        && string.IsNullOrEmpty(invoiceResult.Data.PdfUrl))
+                    {
+                        await _invoiceService.GenerateAndUploadPdfAsync(invoiceResult.Data.Id, cancellationToken);
+                    }
+                }
+                catch { /* invoice failure must not block order update */ }
+            }
+
+            TempData["SuccessMessage"] = "تم تحديث حالة الدفع بنجاح / Payment status updated";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = result.Message ?? "حدث خطأ";
+        }
 
         return RedirectToAction(nameof(Details), new { id });
     }

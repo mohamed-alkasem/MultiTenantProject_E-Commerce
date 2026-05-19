@@ -22,4 +22,7 @@ public sealed class OrderDto
     public List<OrderItemDto> Items { get; init; } = new();
     public List<PaymentDto> Payments { get; init; } = new();
     public DateTime CreatedAt { get; init; }
+    public Guid? InvoiceId { get; init; }
+    public string? InvoiceNumber { get; init; }
+    public string? InvoicePdfUrl { get; init; }
 }

@@ -69,6 +69,12 @@ public sealed class TenantResolutionMiddleware
 
             if (!resolved)
             {
+                // For MVC paths, redirect to login instead of returning raw error text
+                if (isMvcPath && !context.Response.HasStarted)
+                {
+                    context.Response.Redirect(
+                        $"/Dashboard/DashboardAccount/Login?returnUrl={Uri.EscapeDataString(context.Request.Path)}");
+                }
                 return;
             }
 

@@ -78,8 +78,10 @@ public sealed class DashboardAccountController : Controller
             principal,
             new AuthenticationProperties
             {
-                IsPersistent = model.RememberMe,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8),
+                IsPersistent = true,
+                ExpiresUtc = model.RememberMe
+                    ? DateTimeOffset.UtcNow.AddDays(30)
+                    : DateTimeOffset.UtcNow.AddHours(12),
             });
 
         var redirectUrl = Url.IsLocalUrl(returnUrl)

@@ -25,6 +25,7 @@ public sealed class OrderRepository : TenantRepository<Order>, IOrderRepository
         return _context.Orders
             .Include(x => x.Items.Where(i => i.DeletedAt == null))
             .Include(x => x.Payments.Where(p => p.DeletedAt == null))
+            .Include(x => x.Invoice)
             .FirstOrDefaultAsync(
                 x => x.Id == orderId && x.DeletedAt == null,
                 cancellationToken);
