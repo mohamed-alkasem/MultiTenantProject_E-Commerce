@@ -3,6 +3,7 @@ namespace MultiTenantStore.Application.Subscriptions.DTOs;
 public sealed class UpdateSubscriptionPlanDto
 {
     public string Name { get; set; } = default!;
+    public string? NameAr { get; set; }
 
     public decimal PriceMonthly { get; set; }
 

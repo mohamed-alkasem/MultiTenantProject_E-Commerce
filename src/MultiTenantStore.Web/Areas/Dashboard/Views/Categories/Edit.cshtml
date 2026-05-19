@@ -1,0 +1,69 @@
+@model CategoryFormViewModel
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-right"></i>
+    </a>
+    <h5 class="mb-0 fw-bold">تعديل الفئة</h5>
+</div>
+
+<div class="row">
+    <div class="col-12 col-md-7 col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label fw-medium">الاسم (إنجليزي) <span class="text-danger">*</span></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NameAr" class="form-label fw-medium">الاسم بالعربي</label>
+                        <input asp-for="NameAr" class="form-control" dir="auto" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Slug" class="form-label fw-medium">الرابط المختصر <span class="text-danger">*</span></label>
+                        <input asp-for="Slug" class="form-control" dir="ltr" />
+                        <span asp-validation-for="Slug" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="ParentCategoryId" class="form-label fw-medium">الفئة الأم</label>
+                        <select asp-for="ParentCategoryId" asp-items="Model.ParentCategories" class="form-select">
+                            <option value="">-- فئة رئيسية --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="SortOrder" class="form-label fw-medium">ترتيب العرض</label>
+                        <input asp-for="SortOrder" class="form-control" type="number" min="0" />
+                    </div>
+
+                    <div class="mb-4 form-check form-switch">
+                        <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                        <label asp-for="IsActive" class="form-check-label">فئة نشطة</label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i> حفظ التعديلات
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">إلغاء</a>
+                        <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                              onsubmit="return confirm('هل أنت متأكد من حذف هذه الفئة؟')"
+                              class="me-auto">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="bi bi-trash me-1"></i> حذف
+                            </button>
+                        </form>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -3,6 +3,7 @@ namespace MultiTenantStore.Application.Subscriptions.DTOs;
 public sealed class CreateSubscriptionPlanDto
 {
     public string Name { get; set; } = default!;
+    public string? NameAr { get; set; }
 
     public string Code { get; set; } = default!;
 

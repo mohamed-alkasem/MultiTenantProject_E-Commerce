@@ -1,0 +1,199 @@
+@model OrderDetailsViewModel
+@{
+    var order = Model.Order;
+}
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-right"></i>
+    </a>
+    <div>
+        <h5 class="mb-0 fw-bold">طلب #@order.OrderNumber</h5>
+        <small class="text-muted">@order.CreatedAt.ToString("yyyy/MM/dd HH:mm")</small>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-box-seam me-2 text-primary"></i>المنتجات</div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>المنتج</th>
+                                <th>الكمية</th>
+                                <th>السعر</th>
+                                <th>الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in order.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-medium">@item.ProductNameSnapshot</div>
+                                        @if (!string.IsNullOrEmpty(item.VariantInfoSnapshot))
+                                        {
+                                            <small class="text-muted">@item.VariantInfoSnapshot</small>
+                                        }
+                                        <div class="text-muted small font-monospace">@item.SKU</div>
+                                    </td>
+                                    <td>@item.Quantity</td>
+                                    <td>@item.UnitPrice.ToString("N2")</td>
+                                    <td class="fw-medium">@item.LineTotal.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="bg-light">
+                            <tr>
+                                <td colspan="3" class="text-end fw-medium">المجموع الفرعي</td>
+                                <td>@order.Subtotal.ToString("N2")</td>
+                            </tr>
+                            @if (order.DiscountAmount > 0)
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-end text-success">الخصم</td>
+                                    <td class="text-success">-@order.DiscountAmount.ToString("N2")</td>
+                                </tr>
+                            }
+                            @if (order.ShippingAmount > 0)
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-end">الشحن</td>
+                                    <td>@order.ShippingAmount.ToString("N2")</td>
+                                </tr>
+                            }
+                            @if (order.TaxAmount > 0)
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-end">الضريبة</td>
+                                    <td>@order.TaxAmount.ToString("N2")</td>
+                                </tr>
+                            }
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold fs-6">الإجمالي</td>
+                                <td class="fw-bold fs-6">@order.TotalAmount.ToString("N2") @order.Currency</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header"><i class="bi bi-geo-alt me-2 text-info"></i>عنوان الشحن</div>
+                    <div class="card-body small">
+                        <p class="fw-medium mb-1">@order.ShippingAddress.FullName</p>
+                        <p class="mb-1">@order.ShippingAddress.Phone</p>
+                        <p class="mb-1">@order.ShippingAddress.AddressLine1</p>
+                        @if (!string.IsNullOrEmpty(order.ShippingAddress.AddressLine2))
+                        {
+                            <p class="mb-1">@order.ShippingAddress.AddressLine2</p>
+                        }
+                        <p class="mb-0">@order.ShippingAddress.City، @order.ShippingAddress.Country</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header"><i class="bi bi-receipt me-2 text-warning"></i>عنوان الفاتورة</div>
+                    <div class="card-body small">
+                        <p class="fw-medium mb-1">@order.BillingAddress.FullName</p>
+                        <p class="mb-1">@order.BillingAddress.Phone</p>
+                        <p class="mb-1">@order.BillingAddress.AddressLine1</p>
+                        <p class="mb-0">@order.BillingAddress.City، @order.BillingAddress.Country</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>حالة الطلب</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label small fw-medium text-muted">حالة الطلب</label>
+                    <form asp-action="UpdateStatus" asp-route-id="@order.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="input-group input-group-sm">
+                            <select name="newStatus" class="form-select">
+                                <option value="Pending" selected="@(order.Status == "Pending")">معلق</option>
+                                <option value="Processing" selected="@(order.Status == "Processing")">قيد التنفيذ</option>
+                                <option value="Completed" selected="@(order.Status == "Completed")">مكتمل</option>
+                                <option value="Cancelled" selected="@(order.Status == "Cancelled")">ملغى</option>
+                            </select>
+                            <button type="submit" class="btn btn-outline-primary">تحديث</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-medium text-muted">حالة الدفع</label>
+                    <form asp-action="UpdatePaymentStatus" asp-route-id="@order.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="input-group input-group-sm">
+                            <select name="newStatus" class="form-select">
+                                <option value="Pending" selected="@(order.PaymentStatus == "Pending")">غير مدفوع</option>
+                                <option value="Paid" selected="@(order.PaymentStatus == "Paid")">مدفوع</option>
+                                <option value="Refunded" selected="@(order.PaymentStatus == "Refunded")">مُسترد</option>
+                                <option value="Failed" selected="@(order.PaymentStatus == "Failed")">فشل</option>
+                            </select>
+                            <button type="submit" class="btn btn-outline-success">تحديث</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div>
+                    <label class="form-label small fw-medium text-muted">حالة الشحن</label>
+                    <form asp-action="UpdateShippingStatus" asp-route-id="@order.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="input-group input-group-sm">
+                            <select name="newStatus" class="form-select">
+                                <option value="Pending" selected="@(order.ShippingStatus == "Pending")">لم يُشحن</option>
+                                <option value="Processing" selected="@(order.ShippingStatus == "Processing")">جاري الشحن</option>
+                                <option value="Shipped" selected="@(order.ShippingStatus == "Shipped")">تم الشحن</option>
+                                <option value="Delivered" selected="@(order.ShippingStatus == "Delivered")">تم التوصيل</option>
+                                <option value="Returned" selected="@(order.ShippingStatus == "Returned")">مُعاد</option>
+                            </select>
+                            <button type="submit" class="btn btn-outline-info">تحديث</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        @if (order.CustomerId.HasValue)
+        {
+            <div class="card mb-3">
+                <div class="card-header"><i class="bi bi-person me-2 text-secondary"></i>العميل</div>
+                <div class="card-body small">
+                    <p class="fw-medium mb-1">@order.CustomerName</p>
+                </div>
+            </div>
+        }
+
+        @if (order.Payments.Any())
+        {
+            <div class="card">
+                <div class="card-header"><i class="bi bi-credit-card me-2 text-success"></i>المدفوعات</div>
+                <div class="card-body p-0">
+                    @foreach (var payment in order.Payments)
+                    {
+                        <div class="px-3 py-2 border-bottom">
+                            <div class="d-flex justify-content-between">
+                                <span class="small">@payment.PaymentMethod</span>
+                                <span class="small fw-medium">@payment.Amount.ToString("N2") @payment.Currency</span>
+                            </div>
+                            <div class="text-muted" style="font-size: 0.75rem;">@payment.Status</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

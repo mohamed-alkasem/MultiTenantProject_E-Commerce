@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using MultiTenantStore.Application.Common.MultiTenancy;
 using MultiTenantStore.Infrastructure.MultiTenancy;
 
@@ -31,6 +33,33 @@ public sealed class TenantResolutionMiddleware
 
         if (routeRules.IsDashboardPath(path))
         {
+            var isMvcPath = !path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
+
+            if (isMvcPath)
+            {
+                // Default scheme is JWT Bearer, so we must explicitly authenticate
+                // with the Identity cookie scheme for MVC dashboard routes
+                var cookieAuth = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+                if (cookieAuth.Succeeded && cookieAuth.Principal is not null)
+                    context.User = cookieAuth.Principal;
+            }
+
+            var hasStoreClaim = context.User.FindFirst(TenantClaimTypes.StoreId) is not null;
+
+            if (!hasStoreClaim)
+            {
+                if (isMvcPath)
+                {
+                    // Let [Authorize] handle the redirect to the login page
+                    await _next(context);
+                    return;
+                }
+
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Tenant claims are missing or invalid.");
+                return;
+            }
+
             var resolved = await ResolveFromClaimsAsync(
                 context,
                 claimsTenantResolver,

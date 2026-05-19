@@ -5,6 +5,7 @@ public sealed class CreateCategoryDto
     public Guid? ParentCategoryId { get; set; }
 
     public string Name { get; set; } = default!;
+    public string? NameAr { get; set; }
 
     public string Slug { get; set; } = default!;
 

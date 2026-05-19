@@ -1,0 +1,154 @@
+@{
+    Layout = null;
+    string lang = Context.Request.Cookies["site_lang"] ?? "ar";
+    bool isAr = lang == "ar";
+    string dir = isAr ? "rtl" : "ltr";
+    string bootstrapCss = isAr
+        ? "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css"
+        : "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css";
+}
+<!DOCTYPE html>
+<html lang="@lang" dir="@dir">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MultiTenantStore</title>
+    <link rel="stylesheet" href="@bootstrapCss" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" />
+    <style>
+        * { font-family: 'Tajawal', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f2d1a 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        .hero { padding: 5rem 0 3rem; text-align: center; }
+        .hero .badge-pill {
+            background: rgba(52,211,153,0.15);
+            border: 1px solid rgba(52,211,153,0.3);
+            color: #34d399;
+            border-radius: 50px;
+            padding: 0.4rem 1.2rem;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+        }
+        .hero h1 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; line-height: 1.15; }
+        .hero p { font-size: 1.1rem; color: rgba(255,255,255,0.65); max-width: 550px; margin: 1rem auto; }
+        .action-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            transition: all 0.25s;
+            height: 100%;
+            text-decoration: none;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .action-card:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.25);
+            transform: translateY(-4px);
+            color: #fff;
+        }
+        .action-card .icon-wrap {
+            width: 70px; height: 70px;
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem;
+            margin: 0 auto 1.25rem;
+        }
+        .action-card h5 { font-weight: 700; margin-bottom: 0.4rem; font-size: 1.1rem; }
+        .action-card p { color: rgba(255,255,255,0.55); font-size: 0.875rem; margin: 0; flex: 1; }
+        .action-card .card-arrow {
+            margin-top: 1.25rem;
+            color: rgba(255,255,255,0.35);
+            font-size: 1.2rem;
+        }
+        .lang-toggle {
+            position: fixed;
+            top: 1.25rem;
+            @(isAr ? "left" : "right"): 1.25rem;
+            z-index: 100;
+        }
+        .divider {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+
+    <form action="/Home/SetLanguage" method="post" class="lang-toggle">
+        <input type="hidden" name="lang" value="@(isAr ? "en" : "ar")" />
+        <input type="hidden" name="returnUrl" value="/" />
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);">
+            @(isAr ? "English" : "عربي")
+        </button>
+    </form>
+
+    <div class="container">
+        <div class="hero">
+            <div class="badge-pill">
+                <i class="bi bi-stars me-1"></i>
+                @(isAr ? "منصة التجارة الإلكترونية متعددة المستأجرين" : "Multi-Tenant E-Commerce Platform")
+            </div>
+            <h1>
+                @(isAr ? "منصة متجري" : "MultiTenantStore")
+            </h1>
+            <p>
+                @(isAr
+                    ? "ابدأ متجرك الإلكتروني اليوم أو قم بإدارة منصتك كاملةً من لوحة تحكم واحدة"
+                    : "Launch your online store today or manage your entire platform from a single dashboard")
+            </p>
+        </div>
+
+        <div class="row g-3 justify-content-center pb-5" style="max-width:900px;margin:0 auto;">
+            <div class="col-md-4">
+                <a href="/Register" class="action-card">
+                    <div class="icon-wrap" style="background:linear-gradient(135deg,#3ecf8e,#27ae60);">
+                        <i class="bi bi-shop"></i>
+                    </div>
+                    <h5>@(isAr ? "سجّل متجرك" : "Register Your Store")</h5>
+                    <p>@(isAr ? "أنشئ حساباً وابدأ ببيع منتجاتك فوراً" : "Create an account and start selling your products instantly")</p>
+                    <div class="card-arrow">
+                        <i class="bi bi-arrow-@(isAr ? "left" : "right")-circle-fill"></i>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="/Dashboard/DashboardAccount/Login" class="action-card">
+                    <div class="icon-wrap" style="background:linear-gradient(135deg,#3498db,#2980b9);">
+                        <i class="bi bi-grid-1x2-fill"></i>
+                    </div>
+                    <h5>@(isAr ? "لوحة التاجر" : "Merchant Dashboard")</h5>
+                    <p>@(isAr ? "دخل إلى لوحة تحكم متجرك وأدر منتجاتك وطلباتك" : "Access your store dashboard and manage products and orders")</p>
+                    <div class="card-arrow">
+                        <i class="bi bi-arrow-@(isAr ? "left" : "right")-circle-fill"></i>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="/PlatformAdmin/AdminAccount/Login" class="action-card">
+                    <div class="icon-wrap" style="background:linear-gradient(135deg,#6c63ff,#9b59b6);">
+                        <i class="bi bi-shield-lock-fill"></i>
+                    </div>
+                    <h5>@(isAr ? "إدارة المنصة" : "Platform Admin")</h5>
+                    <p>@(isAr ? "لوحة التحكم الخاصة بمدير المنصة" : "Administrator control panel for platform management")</p>
+                    <div class="card-arrow">
+                        <i class="bi bi-arrow-@(isAr ? "left" : "right")-circle-fill"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

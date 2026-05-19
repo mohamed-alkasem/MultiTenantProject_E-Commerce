@@ -26,6 +26,10 @@ public class ProductVariantConfiguration : IEntityTypeConfiguration<ProductVaria
             .IsRequired()
             .HasMaxLength(300);
 
+        builder.Property(x => x.NameAr)
+            .HasMaxLength(300)
+            .IsRequired(false);
+
         builder.Property(x => x.Price)
             .HasPrecision(18, 2);
 

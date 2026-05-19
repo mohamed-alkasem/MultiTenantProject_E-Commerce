@@ -1,0 +1,103 @@
+@model PlatformPlansListViewModel
+@{
+    string lang = Context.Request.Cookies["admin_lang"] ?? "ar";
+    bool isAr = lang == "ar";
+    ViewData["Title"] = isAr ? "خطط الاشتراك" : "Subscription Plans";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h5 class="fw-bold mb-0">@(isAr ? "خطط الاشتراك" : "Subscription Plans")</h5>
+        <div class="text-muted small">@Model.Plans.Count @(isAr ? "خطط مسجلة" : "plans registered")</div>
+    </div>
+    <a asp-area="PlatformAdmin" asp-controller="PlatformPlans" asp-action="Create"
+       class="btn btn-primary btn-sm px-3">
+        <i class="bi bi-plus-lg me-1"></i>
+        @(isAr ? "إضافة خطة" : "Add Plan")
+    </a>
+</div>
+
+<div class="row g-3">
+    @foreach (var plan in Model.Plans)
+    {
+        <div class="col-md-6 col-xl-4">
+            <div class="card h-100 @(plan.IsActive ? "" : "opacity-50")" style="border-radius:14px;border:2px solid @(plan.IsActive ? "#e5e7eb" : "#e5e7eb");">
+                <div class="card-body">
+                    <div class="d-flex align-items-start justify-content-between mb-3">
+                        <div>
+                            <span class="badge bg-secondary mb-1" style="font-size:0.65rem;letter-spacing:1px;">@plan.Code</span>
+                            <h6 class="fw-bold mb-0">@(isAr && !string.IsNullOrEmpty(plan.NameAr) ? plan.NameAr : plan.Name)</h6>
+                            @if (isAr && !string.IsNullOrEmpty(plan.NameAr))
+                            {
+                                <div class="text-muted small">@plan.Name</div>
+                            }
+                        </div>
+                        @if (plan.IsActive)
+                        {
+                            <span class="badge bg-success">@(isAr ? "نشط" : "Active")</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">@(isAr ? "متوقف" : "Inactive")</span>
+                        }
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="bg-light rounded-3 p-2 text-center">
+                                <div class="fw-bold fs-5 text-primary">
+                                    @(plan.PriceMonthly == 0 ? (isAr ? "مجاني" : "Free") : $"${plan.PriceMonthly}")
+                                </div>
+                                <div class="text-muted" style="font-size:0.7rem;">@(isAr ? "شهرياً" : "/ month")</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-light rounded-3 p-2 text-center">
+                                <div class="fw-bold fs-5 text-success">
+                                    @(plan.PriceYearly == 0 ? (isAr ? "مجاني" : "Free") : $"${plan.PriceYearly}")
+                                </div>
+                                <div class="text-muted" style="font-size:0.7rem;">@(isAr ? "سنوياً" : "/ year")</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mb-3" style="font-size:0.82rem;">
+                        <div><i class="bi bi-box-seam text-muted me-1"></i>@plan.MaxProducts @(isAr ? "منتج" : "products")</div>
+                        <div><i class="bi bi-people text-muted me-1"></i>@plan.MaxStaffUsers @(isAr ? "موظف" : "staff")</div>
+                        <div><i class="bi bi-shop text-muted me-1"></i>@plan.SubscriberCount @(isAr ? "متجر" : "stores")</div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a asp-area="PlatformAdmin" asp-controller="PlatformPlans" asp-action="Edit"
+                           asp-route-id="@plan.Id"
+                           class="btn btn-sm btn-outline-secondary flex-fill">
+                            <i class="bi bi-pencil me-1"></i>@(isAr ? "تعديل" : "Edit")
+                        </a>
+                        <form asp-area="PlatformAdmin" asp-controller="PlatformPlans" asp-action="ToggleActive"
+                              asp-route-id="@plan.Id" method="post" class="flex-fill">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-sm w-100 @(plan.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                <i class="bi bi-@(plan.IsActive ? "pause-circle" : "play-circle") me-1"></i>
+                                @(plan.IsActive ? (isAr ? "إيقاف" : "Deactivate") : (isAr ? "تفعيل" : "Activate"))
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (!Model.Plans.Any())
+    {
+        <div class="col-12">
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-layers fs-1 d-block mb-2 opacity-25"></i>
+                <p>@(isAr ? "لا توجد خطط بعد. أضف خطتك الأولى." : "No plans yet. Add your first plan.")</p>
+                <a asp-area="PlatformAdmin" asp-controller="PlatformPlans" asp-action="Create"
+                   class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>@(isAr ? "إضافة خطة" : "Add Plan")
+                </a>
+            </div>
+        </div>
+    }
+</div>

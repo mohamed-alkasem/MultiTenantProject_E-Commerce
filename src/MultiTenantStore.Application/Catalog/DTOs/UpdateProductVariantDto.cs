@@ -7,6 +7,7 @@ public sealed class UpdateProductVariantDto
     public string SKU { get; set; } = default!;
 
     public string Name { get; set; } = default!;
+    public string? NameAr { get; set; }
 
     public decimal Price { get; set; }
 

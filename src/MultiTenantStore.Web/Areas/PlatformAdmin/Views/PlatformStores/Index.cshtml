@@ -1,0 +1,130 @@
+@model PlatformStoresListViewModel
+@{
+    string lang = Context.Request.Cookies["admin_lang"] ?? "ar";
+    bool isAr = lang == "ar";
+    ViewData["Title"] = isAr ? "إدارة المتاجر" : "Store Management";
+}
+
+@{
+    string StatusLabel(string s) => (s, isAr) switch
+    {
+        ("Active", true) => "نشط",           ("Active", false) => "Active",
+        ("PendingProvisioning", true) => "قيد الإعداد", ("PendingProvisioning", false) => "Pending",
+        ("Suspended", true) => "معلق",       ("Suspended", false) => "Suspended",
+        ("ProvisioningFailed", true) => "فشل الإعداد", ("ProvisioningFailed", false) => "Failed",
+        _ => s
+    };
+    string StatusBadge(string s) => s switch
+    {
+        "Active" => "bg-success",
+        "PendingProvisioning" => "bg-warning text-dark",
+        "Suspended" => "bg-danger",
+        "ProvisioningFailed" => "bg-dark",
+        _ => "bg-secondary"
+    };
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h5 class="mb-0 fw-bold">@(isAr ? "المتاجر" : "Stores")</h5>
+        <p class="text-muted small mb-0">@(isAr ? "إدارة جميع متاجر المنصة" : "Manage all platform stores")</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form method="get" class="d-flex gap-2 flex-wrap align-items-center">
+            <input type="text" name="search" value="@Model.Search"
+                   class="form-control form-control-sm" style="max-width:240px;"
+                   placeholder="@(isAr ? "بحث باسم المتجر أو البريد..." : "Search store name or email...")" />
+            <select name="status" class="form-select form-select-sm" style="max-width:160px;">
+                <option value="">@(isAr ? "كل الحالات" : "All Statuses")</option>
+                <option value="Active" selected="@(Model.StatusFilter == "Active")">@(isAr ? "نشط" : "Active")</option>
+                <option value="PendingProvisioning" selected="@(Model.StatusFilter == "PendingProvisioning")">@(isAr ? "قيد الإعداد" : "Pending")</option>
+                <option value="Suspended" selected="@(Model.StatusFilter == "Suspended")">@(isAr ? "معلق" : "Suspended")</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-search"></i> @(isAr ? "بحث" : "Search")
+            </button>
+            @if (!string.IsNullOrEmpty(Model.Search) || !string.IsNullOrEmpty(Model.StatusFilter))
+            {
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i>
+                </a>
+            }
+            <span class="text-muted small ms-auto">@Model.Stores.Count @(isAr ? "متجر" : "stores")</span>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Stores.Any())
+        {
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-shop fs-1 d-block mb-2 opacity-25"></i>
+                <p>@(isAr ? "لا توجد متاجر تطابق البحث" : "No stores match your search")</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>@(isAr ? "المتجر" : "Store")</th>
+                            <th>@(isAr ? "المالك" : "Owner")</th>
+                            <th>@(isAr ? "الحالة" : "Status")</th>
+                            <th>@(isAr ? "الاشتراك" : "Subscription")</th>
+                            <th>@(isAr ? "قاعدة البيانات" : "Database")</th>
+                            <th>@(isAr ? "تاريخ الإنشاء" : "Created")</th>
+                            <th class="text-center">@(isAr ? "إجراءات" : "Actions")</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var store in Model.Stores)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-medium">@store.StoreName</div>
+                                    @if (!string.IsNullOrEmpty(store.StoreNameAr))
+                                    {
+                                        <div class="text-muted small">@store.StoreNameAr</div>
+                                    }
+                                    <div class="text-muted small font-monospace">/@store.Slug</div>
+                                </td>
+                                <td>
+                                    <div class="small fw-medium">@store.OwnerName</div>
+                                    <div class="text-muted" style="font-size:0.75rem;">@store.OwnerEmail</div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-status @StatusBadge(store.Status.ToString())">
+                                        @StatusLabel(store.Status.ToString())
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-muted small">@store.SubscriptionStatus</span>
+                                </td>
+                                <td>
+                                    @if (store.HasDatabase)
+                                    {
+                                        <span class="badge bg-success">@(isAr ? "مُهيأ" : "Provisioned")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@(isAr ? "غير مُهيأ" : "Not Ready")</span>
+                                    }
+                                </td>
+                                <td class="text-muted small">@store.CreatedAt.ToString("yyyy/MM/dd")</td>
+                                <td class="text-center">
+                                    <a asp-area="PlatformAdmin" asp-controller="PlatformStores"
+                                       asp-action="Details" asp-route-id="@store.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

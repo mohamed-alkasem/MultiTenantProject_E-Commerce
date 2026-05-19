@@ -5,6 +5,8 @@ namespace MultiTenantStore.Domain.Platform;
 public class SubscriptionPlan : AuditableEntity, ISoftDelete
 {
     public string Name { get; set; } = default!;
+    public string? NameAr { get; set; }
+
     public string Code { get; set; } = default!;
 
     public decimal PriceMonthly { get; set; }

@@ -19,6 +19,10 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .IsRequired()
             .HasMaxLength(300);
 
+        builder.Property(x => x.NameAr)
+            .HasMaxLength(300)
+            .IsRequired(false);
+
         builder.Property(x => x.Slug)
             .IsRequired()
             .HasMaxLength(300);
@@ -30,7 +34,14 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasMaxLength(500)
             .IsRequired(false);
 
+        builder.Property(x => x.ShortDescriptionAr)
+            .HasMaxLength(500)
+            .IsRequired(false);
+
         builder.Property(x => x.Description)
+            .IsRequired(false);
+
+        builder.Property(x => x.DescriptionAr)
             .IsRequired(false);
 
         builder.Property(x => x.SKU)

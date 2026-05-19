@@ -1,0 +1,242 @@
+@model StoreDetailsViewModel
+@{
+    string lang = Context.Request.Cookies["admin_lang"] ?? "ar";
+    bool isAr = lang == "ar";
+    ViewData["Title"] = isAr ? $"تفاصيل المتجر: {Model.StoreName}" : $"Store: {Model.StoreName}";
+}
+
+@{
+    string StatusLabel(string s) => (s, isAr) switch
+    {
+        ("Active", true) => "نشط",             ("Active", false) => "Active",
+        ("PendingProvisioning", true) => "قيد الإعداد", ("PendingProvisioning", false) => "Pending",
+        ("Suspended", true) => "معلق",         ("Suspended", false) => "Suspended",
+        _ => s
+    };
+    string StatusBadge(string s) => s switch
+    {
+        "Active" => "bg-success",
+        "PendingProvisioning" => "bg-warning text-dark",
+        "Suspended" => "bg-danger",
+        _ => "bg-secondary"
+    };
+}
+
+<div class="mb-3">
+    <a asp-area="PlatformAdmin" asp-controller="PlatformStores" asp-action="Index"
+       class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-@(isAr ? "right" : "left")"></i>
+        @(isAr ? "رجوع للمتاجر" : "Back to Stores")
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-shop me-1"></i>
+                    @(isAr ? "معلومات المتجر" : "Store Information")
+                </h6>
+                <span class="badge @StatusBadge(Model.Status.ToString()) badge-status">
+                    @StatusLabel(Model.Status.ToString())
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">@(isAr ? "اسم المتجر (عربي)" : "Store Name (AR)")</label>
+                        <strong>@(Model.StoreNameAr ?? "—")</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">@(isAr ? "اسم المتجر (إنجليزي)" : "Store Name (EN)")</label>
+                        <strong>@Model.StoreName</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">@(isAr ? "المعرف (Slug)" : "Slug")</label>
+                        <span class="font-monospace">/@Model.Slug</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">@(isAr ? "حالة الاشتراك" : "Subscription Status")</label>
+                        <span>@Model.SubscriptionStatus</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">@(isAr ? "تاريخ الإنشاء" : "Created At")</label>
+                        <span>@Model.CreatedAt.ToString("yyyy/MM/dd HH:mm")</span>
+                    </div>
+                    @if (Model.ActivatedAt.HasValue)
+                    {
+                        <div class="col-sm-6">
+                            <label class="text-muted small d-block">@(isAr ? "تاريخ التفعيل" : "Activated At")</label>
+                            <span class="text-success">@Model.ActivatedAt.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                        </div>
+                    }
+                    @if (Model.SuspendedAt.HasValue)
+                    {
+                        <div class="col-sm-6">
+                            <label class="text-muted small d-block">@(isAr ? "تاريخ التعليق" : "Suspended At")</label>
+                            <span class="text-danger">@Model.SuspendedAt.Value.ToString("yyyy/MM/dd HH:mm")</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-person me-1"></i>
+                    @(isAr ? "معلومات المالك" : "Owner Information")
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">@(isAr ? "الاسم" : "Name")</label>
+                        <strong>@Model.OwnerName</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="text-muted small d-block">@(isAr ? "البريد الإلكتروني" : "Email")</label>
+                        <span>@Model.OwnerEmail</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-server me-1"></i>
+                    @(isAr ? "قاعدة البيانات" : "Database")
+                </h6>
+            </div>
+            <div class="card-body">
+                @if (Model.HasDatabase)
+                {
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-success">@(isAr ? "مُهيأ" : "Provisioned")</span>
+                        <span class="font-monospace small">@Model.DatabaseName</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-warning text-dark">@(isAr ? "غير مُهيأ" : "Not Provisioned")</span>
+                        @if (!string.IsNullOrEmpty(Model.ProvisioningStatus))
+                        {
+                            <span class="text-muted small">(@Model.ProvisioningStatus)</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (Model.Domains.Any())
+        {
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-globe me-1"></i>
+                        @(isAr ? "النطاقات" : "Domains")
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @foreach (var domain in Model.Domains)
+                    {
+                        <span class="badge bg-light text-dark border me-1 mb-1 px-2 py-1">@domain</span>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (Model.ActiveSubscription is not null)
+        {
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="bi bi-credit-card me-1"></i>
+                        @(isAr ? "الاشتراك الحالي" : "Current Subscription")
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-sm-4">
+                            <label class="text-muted small d-block">@(isAr ? "الخطة" : "Plan")</label>
+                            <strong>@Model.ActiveSubscription.PlanName</strong>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="text-muted small d-block">@(isAr ? "الحالة" : "Status")</label>
+                            <span>@Model.ActiveSubscription.Status</span>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="text-muted small d-block">@(isAr ? "دورة الفوترة" : "Billing Cycle")</label>
+                            <span>@Model.ActiveSubscription.BillingCycle</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small d-block">@(isAr ? "تاريخ البدء" : "Start Date")</label>
+                            <span>@Model.ActiveSubscription.StartDate.ToString("yyyy/MM/dd")</span>
+                        </div>
+                        @if (Model.ActiveSubscription.EndDate.HasValue)
+                        {
+                            <div class="col-sm-6">
+                                <label class="text-muted small d-block">@(isAr ? "تاريخ الانتهاء" : "End Date")</label>
+                                <span>@Model.ActiveSubscription.EndDate.Value.ToString("yyyy/MM/dd")</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0 fw-semibold">
+                    <i class="bi bi-gear me-1"></i>
+                    @(isAr ? "إجراءات الإدارة" : "Admin Actions")
+                </h6>
+            </div>
+            <div class="card-body d-grid gap-2">
+                @if (Model.Status.ToString() != "Active")
+                {
+                    bool needsProvisioning = !Model.HasDatabase;
+                    string activateBtnText = needsProvisioning
+                        ? (isAr ? "إنشاء قاعدة البيانات وتفعيل المتجر" : "Provision DB & Activate")
+                        : (isAr ? "تفعيل المتجر" : "Activate Store");
+                    string activateConfirm = needsProvisioning
+                        ? (isAr ? "سيتم إنشاء قاعدة البيانات الخاصة بالمتجر وتفعيله. هذه العملية قد تستغرق بضع ثوانٍ. هل تريد المتابعة؟" : "This will provision the store database and activate the store. It may take a few seconds. Continue?")
+                        : (isAr ? "هل تريد تفعيل هذا المتجر؟" : "Activate this store?");
+                    <form asp-action="Activate" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn @(needsProvisioning ? "btn-primary" : "btn-success") w-100"
+                                onclick="return confirm('@activateConfirm')">
+                            <i class="bi bi-@(needsProvisioning ? "database-add" : "check-circle") me-1"></i>
+                            @activateBtnText
+                        </button>
+                    </form>
+                }
+                @if (Model.Status.ToString() != "Suspended")
+                {
+                    <form asp-action="Suspend" asp-route-id="@Model.Id" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-warning w-100"
+                                onclick="return confirm('@(isAr ? "هل تريد تعليق هذا المتجر؟" : "Suspend this store?")')">
+                            <i class="bi bi-pause-circle me-1"></i>
+                            @(isAr ? "تعليق المتجر" : "Suspend Store")
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0 fw-semibold text-muted" style="font-size:0.8rem;">@(isAr ? "معرف المتجر" : "Store ID")</h6>
+            </div>
+            <div class="card-body">
+                <code class="small text-break">@Model.Id</code>
+            </div>
+        </div>
+    </div>
+</div>

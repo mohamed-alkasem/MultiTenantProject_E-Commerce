@@ -5,6 +5,7 @@ public sealed class CreateStoreDto
     public Guid OwnerUserId { get; set; }
 
     public string StoreName { get; set; } = default!;
+    public string? StoreNameAr { get; set; }
 
     public string Slug { get; set; } = default!;
 

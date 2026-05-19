@@ -8,6 +8,8 @@ public class Store : AuditableEntity, ISoftDelete
     public Guid OwnerUserId { get; set; }
 
     public string StoreName { get; set; } = default!;
+    public string? StoreNameAr { get; set; }
+
     public string Slug { get; set; } = default!;
 
     public StoreStatus Status { get; set; } = StoreStatus.PendingProvisioning;

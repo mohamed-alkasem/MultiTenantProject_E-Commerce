@@ -8,6 +8,7 @@ public class ProductVariant : AuditableEntity, ISoftDelete
 
     public string SKU { get; set; } = default!;
     public string Name { get; set; } = default!;
+    public string? NameAr { get; set; }
 
     public decimal Price { get; set; }
     public decimal? CompareAtPrice { get; set; }

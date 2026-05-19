@@ -16,6 +16,10 @@ public class SubscriptionPlanConfiguration : IEntityTypeConfiguration<Subscripti
             .IsRequired()
             .HasMaxLength(200);
 
+        builder.Property(x => x.NameAr)
+            .HasMaxLength(200)
+            .IsRequired(false);
+
         builder.Property(x => x.Code)
             .IsRequired()
             .HasMaxLength(100);

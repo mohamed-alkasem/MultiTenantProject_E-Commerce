@@ -1,0 +1,119 @@
+@model SettingsViewModel
+
+<div class="mb-4">
+    <h5 class="mb-0 fw-bold">إعدادات المتجر</h5>
+    <p class="text-muted small mb-0">تحكم في إعدادات متجرك الأساسية</p>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-gear me-2 text-primary"></i>الإعدادات العامة</div>
+            <div class="card-body">
+                <form asp-action="Update" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Currency" class="form-label fw-medium">العملة</label>
+                            <select asp-for="Currency" class="form-select">
+                                <option value="SAR">ريال سعودي (SAR)</option>
+                                <option value="AED">درهم إماراتي (AED)</option>
+                                <option value="USD">دولار أمريكي (USD)</option>
+                                <option value="EUR">يورو (EUR)</option>
+                                <option value="GBP">جنيه إسترليني (GBP)</option>
+                                <option value="KWD">دينار كويتي (KWD)</option>
+                                <option value="QAR">ريال قطري (QAR)</option>
+                                <option value="JOD">دينار أردني (JOD)</option>
+                            </select>
+                            <span asp-validation-for="Currency" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="DefaultLanguage" class="form-label fw-medium">اللغة الافتراضية</label>
+                            <select asp-for="DefaultLanguage" class="form-select">
+                                <option value="ar">العربية</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Timezone" class="form-label fw-medium">المنطقة الزمنية</label>
+                            <select asp-for="Timezone" class="form-select">
+                                <option value="Asia/Riyadh">توقيت الرياض (UTC+3)</option>
+                                <option value="Asia/Dubai">توقيت دبي (UTC+4)</option>
+                                <option value="Asia/Kuwait">توقيت الكويت (UTC+3)</option>
+                                <option value="Asia/Qatar">توقيت قطر (UTC+3)</option>
+                                <option value="Africa/Cairo">توقيت القاهرة (UTC+2)</option>
+                                <option value="Asia/Amman">توقيت عمّان (UTC+3)</option>
+                                <option value="UTC">UTC</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="OrderPrefix" class="form-label fw-medium">بادئة رقم الطلب</label>
+                            <input asp-for="OrderPrefix" class="form-control" placeholder="ORD-" dir="ltr" />
+                            <span asp-validation-for="OrderPrefix" class="text-danger small"></span>
+                            <div class="form-text">مثال: ORD-0001</div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input asp-for="TaxEnabled" class="form-check-input" type="checkbox" />
+                                <label asp-for="TaxEnabled" class="form-check-label">تفعيل الضريبة (VAT)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i> حفظ الإعدادات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-cart-check me-2 text-success"></i>إعدادات الدفع</div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <div class="fw-medium">الدفع (Checkout)</div>
+                        <div class="text-muted small">السماح للعملاء بإتمام الشراء</div>
+                    </div>
+                    @if (Model.IsCheckoutEnabled)
+                    {
+                        <span class="badge bg-success">مفعّل</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">معطّل</span>
+                    }
+                </div>
+
+                @if (Model.IsCheckoutEnabled)
+                {
+                    <form asp-action="DisableCheckout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger w-100"
+                                onclick="return confirm('هل تريد تعطيل الدفع؟ لن يتمكن العملاء من إتمام الشراء.')">
+                            <i class="bi bi-x-circle me-1"></i> تعطيل الدفع
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <form asp-action="EnableCheckout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="bi bi-check-circle me-1"></i> تفعيل الدفع
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>

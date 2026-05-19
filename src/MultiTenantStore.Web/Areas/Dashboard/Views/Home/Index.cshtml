@@ -1,0 +1,182 @@
+@model DashboardHomeViewModel
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-box-seam"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">المنتجات</div>
+                    <div class="fs-4 fw-bold">@Model.TotalProducts</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-bag-check"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">إجمالي الطلبات</div>
+                    <div class="fs-4 fw-bold">@Model.TotalOrders</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="bi bi-clock-history"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">طلبات معلقة</div>
+                    <div class="fs-4 fw-bold">@Model.PendingOrders</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-currency-dollar"></i>
+                </div>
+                <div>
+                    <div class="text-muted small">الإيرادات</div>
+                    <div class="fs-5 fw-bold">@Model.TotalRevenue.ToString("N2") @Model.Currency</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <span><i class="bi bi-clock-history text-primary me-2"></i>آخر الطلبات</span>
+                <a asp-area="Dashboard" asp-controller="DashboardOrders" asp-action="Index"
+                   class="btn btn-sm btn-outline-primary">عرض الكل</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.RecentOrders.Any())
+                {
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        لا توجد طلبات حتى الآن
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>رقم الطلب</th>
+                                    <th>العميل</th>
+                                    <th>الحالة</th>
+                                    <th>المبلغ</th>
+                                    <th>التاريخ</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var order in Model.RecentOrders)
+                                {
+                                    <tr>
+                                        <td class="fw-medium">#@order.OrderNumber</td>
+                                        <td>@(order.CustomerName ?? "—")</td>
+                                        <td>
+                                            @{
+                                                var statusClass = order.Status switch
+                                                {
+                                                    "Pending" => "bg-warning text-dark",
+                                                    "Processing" => "bg-info text-dark",
+                                                    "Completed" => "bg-success",
+                                                    "Cancelled" => "bg-danger",
+                                                    _ => "bg-secondary"
+                                                };
+                                                var statusAr = order.Status switch
+                                                {
+                                                    "Pending" => "معلق",
+                                                    "Processing" => "قيد التنفيذ",
+                                                    "Completed" => "مكتمل",
+                                                    "Cancelled" => "ملغى",
+                                                    _ => order.Status
+                                                };
+                                            }
+                                            <span class="badge badge-status @statusClass">@statusAr</span>
+                                        </td>
+                                        <td class="fw-medium">@order.TotalAmount.ToString("N2") @order.Currency</td>
+                                        <td class="text-muted small">@order.CreatedAt.ToString("yyyy/MM/dd")</td>
+                                        <td>
+                                            <a asp-area="Dashboard" asp-controller="DashboardOrders"
+                                               asp-action="Details" asp-route-id="@order.Id"
+                                               class="btn btn-action btn-outline-secondary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-info-circle text-primary me-2"></i>حالة المتجر
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <span class="text-muted">الدفع (Checkout)</span>
+                    @if (Model.IsCheckoutEnabled)
+                    {
+                        <span class="badge bg-success">مفعّل</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger">معطّل</span>
+                    }
+                </div>
+                <div class="d-flex align-items-center justify-content-between">
+                    <span class="text-muted">العملة</span>
+                    <span class="fw-medium">@Model.Currency</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning text-warning me-2"></i>إجراءات سريعة
+            </div>
+            <div class="card-body d-grid gap-2">
+                <a asp-area="Dashboard" asp-controller="DashboardProducts" asp-action="Create"
+                   class="btn btn-outline-primary btn-sm text-start">
+                    <i class="bi bi-plus-circle me-2"></i>إضافة منتج جديد
+                </a>
+                <a asp-area="Dashboard" asp-controller="DashboardCategories" asp-action="Create"
+                   class="btn btn-outline-secondary btn-sm text-start">
+                    <i class="bi bi-folder-plus me-2"></i>إضافة فئة جديدة
+                </a>
+                <a asp-area="Dashboard" asp-controller="DashboardOrders" asp-action="Index"
+                   class="btn btn-outline-success btn-sm text-start">
+                    <i class="bi bi-bag me-2"></i>عرض الطلبات
+                </a>
+                <a asp-area="Dashboard" asp-controller="DashboardSettings" asp-action="Index"
+                   class="btn btn-outline-secondary btn-sm text-start">
+                    <i class="bi bi-gear me-2"></i>إعدادات المتجر
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

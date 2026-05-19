@@ -275,6 +275,10 @@ namespace MultiTenantStore.Persistence.Migrations.Main
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("StoreNameAr")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<int>("SubscriptionStatus")
                         .HasColumnType("int");
 
@@ -667,6 +671,10 @@ namespace MultiTenantStore.Persistence.Migrations.Main
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("NameAr")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<decimal>("PriceMonthly")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -779,6 +787,10 @@ namespace MultiTenantStore.Persistence.Migrations.Main
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NameAr")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
@@ -1397,6 +1409,9 @@ namespace MultiTenantStore.Persistence.Migrations.Main
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("DescriptionAr")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -1408,6 +1423,10 @@ namespace MultiTenantStore.Persistence.Migrations.Main
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("NameAr")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 
@@ -1424,6 +1443,10 @@ namespace MultiTenantStore.Persistence.Migrations.Main
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("ShortDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ShortDescriptionAr")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
@@ -1526,6 +1549,10 @@ namespace MultiTenantStore.Persistence.Migrations.Main
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("NameAr")
                         .HasMaxLength(300)
                         .HasColumnType("nvarchar(300)");
 

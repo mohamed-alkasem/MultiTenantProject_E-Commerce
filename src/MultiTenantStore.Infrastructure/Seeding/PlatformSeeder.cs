@@ -31,6 +31,7 @@ public sealed class PlatformSeeder
         await SeedRolesAsync();
         await SeedSubscriptionPlansAsync(cancellationToken);
         await SeedDefaultAdminAsync();
+        await PromoteAdditionalAdminsAsync();
     }
 
     private async Task SeedRolesAsync()
@@ -169,6 +170,29 @@ public sealed class PlatformSeeder
             var errors = roleResult.Errors.Select(x => x.Description).ToList();
             throw new InvalidOperationException(
                 $"Could not assign PlatformAdmin role. Errors: {string.Join(", ", errors)}");
+        }
+    }
+
+    private async Task PromoteAdditionalAdminsAsync()
+    {
+        var additionalEmails = _configuration
+            .GetSection("Seed:AdditionalAdminEmails")
+            .Get<string[]>();
+
+        if (additionalEmails is null || additionalEmails.Length == 0)
+            return;
+
+        foreach (var email in additionalEmails)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user is null) continue;
+
+            var isAlreadyAdmin = await _userManager.IsInRoleAsync(
+                user, IdentityRoleConstants.PlatformAdmin);
+
+            if (isAlreadyAdmin) continue;
+
+            await _userManager.AddToRoleAsync(user, IdentityRoleConstants.PlatformAdmin);
         }
     }
 }

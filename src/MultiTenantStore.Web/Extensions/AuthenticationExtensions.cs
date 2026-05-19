@@ -44,6 +44,15 @@ public static class AuthenticationExtensions
             .AddEntityFrameworkStores<MainDbContext>()
             .AddDefaultTokenProviders();
 
+        services.ConfigureApplicationCookie(options =>
+        {
+            options.LoginPath = "/Dashboard/DashboardAccount/Login";
+            options.LogoutPath = "/Dashboard/DashboardAccount/Logout";
+            options.AccessDeniedPath = "/Dashboard/DashboardAccount/Login";
+            options.SlidingExpiration = true;
+            options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        });
+
         var key = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes(jwtOptions.SecretKey));
 
@@ -72,6 +81,15 @@ public static class AuthenticationExtensions
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
+            })
+            .AddCookie("PlatformAdmin", options =>
+            {
+                options.LoginPath = "/PlatformAdmin/AdminAccount/Login";
+                options.LogoutPath = "/PlatformAdmin/AdminAccount/Logout";
+                options.AccessDeniedPath = "/PlatformAdmin/AdminAccount/Login";
+                options.SlidingExpiration = true;
+                options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                options.Cookie.Name = ".PlatformAdmin.Session";
             });
 
         return services;
