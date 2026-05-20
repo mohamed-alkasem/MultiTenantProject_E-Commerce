@@ -77,9 +77,12 @@ public sealed class ProductService : IProductService
             Id = Guid.NewGuid(),
             CategoryId = dto.CategoryId,
             Name = dto.Name.Trim(),
+            NameAr = dto.NameAr?.Trim(),
             Slug = slug,
             ShortDescription = dto.ShortDescription,
+            ShortDescriptionAr = dto.ShortDescriptionAr,
             Description = dto.Description,
+            DescriptionAr = dto.DescriptionAr,
             SKU = sku,
             Price = dto.Price,
             CompareAtPrice = dto.CompareAtPrice,
@@ -212,9 +215,12 @@ public sealed class ProductService : IProductService
 
         product.CategoryId = dto.CategoryId;
         product.Name = dto.Name.Trim();
+        product.NameAr = dto.NameAr?.Trim();
         product.Slug = slug;
         product.ShortDescription = dto.ShortDescription;
+        product.ShortDescriptionAr = dto.ShortDescriptionAr;
         product.Description = dto.Description;
+        product.DescriptionAr = dto.DescriptionAr;
         product.SKU = sku;
         product.Price = dto.Price;
         product.CompareAtPrice = dto.CompareAtPrice;
@@ -289,6 +295,7 @@ public sealed class ProductService : IProductService
         {
             Id = product.Id,
             Name = product.Name,
+            NameAr = product.NameAr,
             Slug = product.Slug,
             SKU = product.SKU,
             Price = product.Price,
@@ -308,9 +315,12 @@ public sealed class ProductService : IProductService
             CategoryId = product.CategoryId,
             CategoryName = categoryName,
             Name = product.Name,
+            NameAr = product.NameAr,
             Slug = product.Slug,
             ShortDescription = product.ShortDescription,
+            ShortDescriptionAr = product.ShortDescriptionAr,
             Description = product.Description,
+            DescriptionAr = product.DescriptionAr,
             SKU = product.SKU,
             Price = product.Price,
             CompareAtPrice = product.CompareAtPrice,

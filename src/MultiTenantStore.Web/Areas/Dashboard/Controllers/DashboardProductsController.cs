@@ -13,13 +13,19 @@ public sealed class DashboardProductsController : Controller
 {
     private readonly IProductService _productService;
     private readonly ICategoryService _categoryService;
+    private readonly IProductImageService _imageService;
+    private readonly IWebHostEnvironment _env;
 
     public DashboardProductsController(
         IProductService productService,
-        ICategoryService categoryService)
+        ICategoryService categoryService,
+        IProductImageService imageService,
+        IWebHostEnvironment env)
     {
         _productService = productService;
         _categoryService = categoryService;
+        _imageService = imageService;
+        _env = env;
     }
 
     public async Task<IActionResult> Index(string? search, CancellationToken cancellationToken)
@@ -132,6 +138,7 @@ public sealed class DashboardProductsController : Controller
             IsActive = p.IsActive,
             SortOrder = p.SortOrder,
             Categories = await GetCategoriesSelectList(cancellationToken),
+            Images = p.Images,
         };
 
         return View(model);
@@ -194,6 +201,81 @@ public sealed class DashboardProductsController : Controller
             result.Success ? "تم حذف المنتج بنجاح" : (result.Message ?? "حدث خطأ أثناء الحذف");
 
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UploadImage(
+        Guid id, IFormFile imageFile, bool isPrimary, CancellationToken cancellationToken)
+    {
+        if (imageFile is not { Length: > 0 })
+        {
+            TempData["ErrorMessage"] = "يرجى اختيار صورة";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+        {
+            TempData["ErrorMessage"] = "صيغة الصورة غير مدعومة. الصيغ المقبولة: jpg, png, webp";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        if (imageFile.Length > 5 * 1024 * 1024)
+        {
+            TempData["ErrorMessage"] = "حجم الصورة يجب ألا يتجاوز 5 ميجابايت";
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        var uploadDir = Path.Combine(_env.WebRootPath, "uploads", "products");
+        Directory.CreateDirectory(uploadDir);
+
+        var fileName = $"{id}-{Guid.NewGuid():N}{ext}";
+        var filePath = Path.Combine(uploadDir, fileName);
+
+        await using (var stream = new FileStream(filePath, FileMode.Create))
+            await imageFile.CopyToAsync(stream, cancellationToken);
+
+        var imageUrl = $"/uploads/products/{fileName}";
+
+        var result = await _imageService.CreateAsync(id, new CreateProductImageDto
+        {
+            ImageUrl = imageUrl,
+            AltText = imageFile.FileName,
+            SortOrder = 0,
+            IsPrimary = isPrimary,
+        }, cancellationToken);
+
+        TempData[result.Success ? "SuccessMessage" : "ErrorMessage"] =
+            result.Success ? "تم رفع الصورة بنجاح" : (result.Message ?? "حدث خطأ أثناء رفع الصورة");
+
+        return RedirectToAction(nameof(Edit), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteImage(
+        Guid id, Guid imageId, CancellationToken cancellationToken)
+    {
+        var result = await _imageService.DeleteAsync(id, imageId, cancellationToken);
+
+        TempData[result.Success ? "SuccessMessage" : "ErrorMessage"] =
+            result.Success ? "تم حذف الصورة بنجاح" : (result.Message ?? "حدث خطأ");
+
+        return RedirectToAction(nameof(Edit), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetPrimaryImage(
+        Guid id, Guid imageId, CancellationToken cancellationToken)
+    {
+        var result = await _imageService.SetPrimaryAsync(id, imageId, cancellationToken);
+
+        TempData[result.Success ? "SuccessMessage" : "ErrorMessage"] =
+            result.Success ? "تم تعيين الصورة الرئيسية" : (result.Message ?? "حدث خطأ");
+
+        return RedirectToAction(nameof(Edit), new { id });
     }
 
     private async Task<List<SelectListItem>> GetCategoriesSelectList(CancellationToken ct)

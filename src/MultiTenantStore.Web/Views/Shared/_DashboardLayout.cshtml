@@ -1,10 +1,18 @@
+@{
+    var dashLang = Context.Request.Cookies["dash_lang"] ?? "ar";
+    bool dashIsAr = dashLang == "ar";
+    string dashDir = dashIsAr ? "rtl" : "ltr";
+    string dashBootstrapCss = dashIsAr
+        ? "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css"
+        : "https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css";
+}
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="@dashLang" dir="@dashDir">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - لوحة التحكم</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" />
+    <title>@ViewData["Title"] - @(dashIsAr ? "لوحة التحكم" : "Dashboard")</title>
+    <link rel="stylesheet" href="@dashBootstrapCss" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" />
     <style>
@@ -16,12 +24,12 @@
             min-height: 100vh;
             background: linear-gradient(180deg, #1a2332 0%, #243447 100%);
             position: fixed;
-            right: 0;
+            @(dashIsAr ? "right" : "left"): 0;
             top: 0;
             z-index: 1000;
             overflow-y: auto;
             transition: transform 0.3s ease;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.15);
+            box-shadow: @(dashIsAr ? "-2px 0" : "2px 0") 10px rgba(0,0,0,0.15);
         }
         .sidebar-logo {
             padding: 1.25rem 1.5rem;
@@ -57,21 +65,21 @@
             text-decoration: none;
             font-size: 0.875rem;
             transition: all 0.2s;
-            border-right: 3px solid transparent;
+            border-@(dashIsAr ? "right" : "left"): 3px solid transparent;
         }
         .sidebar-nav-link:hover {
             color: #fff;
             background: rgba(255,255,255,0.07);
-            border-right-color: rgba(255,255,255,0.3);
+            border-@(dashIsAr ? "right" : "left")-color: rgba(255,255,255,0.3);
         }
         .sidebar-nav-link.active {
             color: #fff;
             background: rgba(52,152,219,0.15);
-            border-right-color: #3498db;
+            border-@(dashIsAr ? "right" : "left")-color: #3498db;
         }
         .sidebar-nav-link i { font-size: 1rem; width: 1.25rem; text-align: center; }
 
-        .main-content { margin-right: 260px; min-height: 100vh; display: flex; flex-direction: column; }
+        .main-content { @(dashIsAr ? "margin-right" : "margin-left"): 260px; min-height: 100vh; display: flex; flex-direction: column; }
 
         .top-navbar {
             background: #fff;
@@ -133,9 +141,9 @@
         .alert { border-radius: 10px; border: none; }
 
         @@media (max-width: 768px) {
-            .sidebar { transform: translateX(260px); }
+            .sidebar { transform: translateX(@(dashIsAr ? "260px" : "-260px")); }
             .sidebar.mobile-open { transform: translateX(0); }
-            .main-content { margin-right: 0; }
+            .main-content { margin-right: 0; margin-left: 0; }
             .mobile-toggle { display: flex !important; }
         }
         .mobile-toggle { display: none; }
@@ -148,60 +156,60 @@
     <div class="sidebar-logo">
         <div class="logo-icon"><i class="bi bi-shop"></i></div>
         <div>
-            <h5>متجري</h5>
-            <small>لوحة التحكم</small>
+            <h5>@(dashIsAr ? "متجري" : "My Store")</h5>
+            <small>@(dashIsAr ? "لوحة التحكم" : "Dashboard")</small>
         </div>
     </div>
 
     <nav>
-        <p class="nav-section-label">الرئيسية</p>
+        <p class="nav-section-label">@(dashIsAr ? "الرئيسية" : "MAIN")</p>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardHome" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardHome" asp-action="Index">
-            <i class="bi bi-speedometer2"></i> نظرة عامة
+            <i class="bi bi-speedometer2"></i> @(dashIsAr ? "نظرة عامة" : "Overview")
         </a>
 
-        <p class="nav-section-label">الكتالوج</p>
+        <p class="nav-section-label">@(dashIsAr ? "الكتالوج" : "CATALOG")</p>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardCategories" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardCategories" asp-action="Index">
-            <i class="bi bi-folder2-open"></i> الفئات
+            <i class="bi bi-folder2-open"></i> @(dashIsAr ? "الفئات" : "Categories")
         </a>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardProducts" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardProducts" asp-action="Index">
-            <i class="bi bi-box-seam"></i> المنتجات
+            <i class="bi bi-box-seam"></i> @(dashIsAr ? "المنتجات" : "Products")
         </a>
 
-        <p class="nav-section-label">المبيعات</p>
+        <p class="nav-section-label">@(dashIsAr ? "المبيعات" : "SALES")</p>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardOrders" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardOrders" asp-action="Index">
-            <i class="bi bi-bag-check"></i> الطلبات
+            <i class="bi bi-bag-check"></i> @(dashIsAr ? "الطلبات" : "Orders")
         </a>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardInvoices" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardInvoices" asp-action="Index">
-            <i class="bi bi-receipt-cutoff"></i> الفواتير
+            <i class="bi bi-receipt-cutoff"></i> @(dashIsAr ? "الفواتير" : "Invoices")
         </a>
 
-        <p class="nav-section-label">العملاء</p>
+        <p class="nav-section-label">@(dashIsAr ? "العملاء" : "CUSTOMERS")</p>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardCustomers" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardCustomers" asp-action="Index">
-            <i class="bi bi-people"></i> العملاء
+            <i class="bi bi-people"></i> @(dashIsAr ? "العملاء" : "Customers")
         </a>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardStaff" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardStaff" asp-action="Index">
-            <i class="bi bi-person-badge"></i> الموظفون
+            <i class="bi bi-person-badge"></i> @(dashIsAr ? "الموظفون" : "Staff")
         </a>
 
-        <p class="nav-section-label">الإعدادات</p>
+        <p class="nav-section-label">@(dashIsAr ? "الإعدادات" : "SETTINGS")</p>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardBranding" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardBranding" asp-action="Index">
-            <i class="bi bi-palette"></i> هوية المتجر
+            <i class="bi bi-palette"></i> @(dashIsAr ? "هوية المتجر" : "Branding")
         </a>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardSubscription" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardSubscription" asp-action="Index">
-            <i class="bi bi-layers"></i> اشتراكي
+            <i class="bi bi-layers"></i> @(dashIsAr ? "اشتراكي" : "Subscription")
         </a>
         <a class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "DashboardSettings" ? "active" : "")"
            asp-area="Dashboard" asp-controller="DashboardSettings" asp-action="Index">
-            <i class="bi bi-gear"></i> إعدادات المتجر
+            <i class="bi bi-gear"></i> @(dashIsAr ? "إعدادات المتجر" : "Settings")
         </a>
     </nav>
 </div>
@@ -219,12 +227,22 @@
             <span class="user-info d-none d-sm-inline">
                 <i class="bi bi-person-circle"></i> @User.Identity?.Name
             </span>
+            @* Language toggle *@
+            <form method="post" action="/Dashboard/DashboardAccount/SetLanguage">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="lang" value="@(dashIsAr ? "en" : "ar")" />
+                <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                <button type="submit" class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem; padding:0.25rem 0.6rem;"
+                        title="@(dashIsAr ? "Switch to English" : "التبديل للعربية")">
+                    @(dashIsAr ? "EN" : "عر")
+                </button>
+            </form>
             <form asp-area="Dashboard" asp-controller="DashboardAccount" asp-action="Logout" method="post" class="d-inline">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="btn btn-sm btn-outline-danger"
-                        onclick="return confirm('هل تريد تسجيل الخروج من لوحة التحكم؟')">
+                        onclick="return confirm('@(dashIsAr ? "هل تريد تسجيل الخروج من لوحة التحكم؟" : "Do you want to logout?")')">
                     <i class="bi bi-box-arrow-left"></i>
-                    <span class="d-none d-sm-inline">خروج</span>
+                    <span class="d-none d-sm-inline">@(dashIsAr ? "خروج" : "Logout")</span>
                 </button>
             </form>
         </div>

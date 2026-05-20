@@ -6,13 +6,13 @@ using MultiTenantStore.Application.Catalog.Services;
 namespace MultiTenantStore.Web.Controllers.Api.Dashboard;
 
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "Bearer")]
 [Route("api/dashboard/categories")]
-public sealed class DashboardCategoriesController : ControllerBase
+public sealed class DashboardCategoriesApiController : ControllerBase
 {
     private readonly ICategoryService _categoryService;
 
-    public DashboardCategoriesController(ICategoryService categoryService)
+    public DashboardCategoriesApiController(ICategoryService categoryService)
     {
         _categoryService = categoryService;
     }

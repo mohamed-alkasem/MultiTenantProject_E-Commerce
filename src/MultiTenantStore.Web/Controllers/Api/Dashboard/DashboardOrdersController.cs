@@ -6,13 +6,13 @@ using MultiTenantStore.Application.Orders.Services;
 namespace MultiTenantStore.Web.Controllers.Api.Dashboard;
 
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "Bearer")]
 [Route("api/dashboard/orders")]
-public sealed class DashboardOrdersController : ControllerBase
+public sealed class DashboardOrdersApiController : ControllerBase
 {
     private readonly IOrderService _orderService;
 
-    public DashboardOrdersController(IOrderService orderService)
+    public DashboardOrdersApiController(IOrderService orderService)
     {
         _orderService = orderService;
     }

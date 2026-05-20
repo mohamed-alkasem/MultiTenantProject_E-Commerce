@@ -6,5 +6,7 @@ public sealed class PublicCategoryDto
 
     public string Name { get; set; } = default!;
 
+    public string? NameAr { get; set; }
+
     public string Slug { get; set; } = default!;
 }

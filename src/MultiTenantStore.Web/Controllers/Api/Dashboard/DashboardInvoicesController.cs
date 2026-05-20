@@ -6,13 +6,13 @@ using MultiTenantStore.Application.Invoices.Services;
 namespace MultiTenantStore.Web.Controllers.Api.Dashboard;
 
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "Bearer")]
 [Route("api/dashboard/invoices")]
-public sealed class DashboardInvoicesController : ControllerBase
+public sealed class DashboardInvoicesApiController : ControllerBase
 {
     private readonly IInvoiceService _invoiceService;
 
-    public DashboardInvoicesController(IInvoiceService invoiceService)
+    public DashboardInvoicesApiController(IInvoiceService invoiceService)
     {
         _invoiceService = invoiceService;
     }

@@ -54,7 +54,7 @@
                     @p.CategoryName
                 </a>
             </div>
-            <h2 class="fw-bold mb-2">@p.Name</h2>
+            <h2 class="fw-bold mb-2">@(isAr && !string.IsNullOrEmpty(p.NameAr) ? p.NameAr : p.Name)</h2>
 
             <div class="d-flex align-items-center gap-3 mb-3">
                 <span class="product-price" style="font-size:1.4rem;">@p.Price.ToString("N2")</span>
@@ -65,9 +65,13 @@
                 }
             </div>
 
-            @if (!string.IsNullOrEmpty(p.ShortDescription))
+            @{
+                var detailShortDesc = isAr && !string.IsNullOrEmpty(p.ShortDescriptionAr) ? p.ShortDescriptionAr : p.ShortDescription;
+                var detailDesc = isAr && !string.IsNullOrEmpty(p.DescriptionAr) ? p.DescriptionAr : p.Description;
+            }
+            @if (!string.IsNullOrEmpty(detailShortDesc))
             {
-                <p class="text-muted mb-3">@p.ShortDescription</p>
+                <p class="text-muted mb-3">@detailShortDesc</p>
             }
 
             @* Stock *@
@@ -126,11 +130,11 @@
             }
 
             @* Description *@
-            @if (!string.IsNullOrEmpty(p.Description))
+            @if (!string.IsNullOrEmpty(detailDesc))
             {
                 <div class="mt-3 pt-3 border-top">
                     <h6 class="fw-bold mb-2">@(isAr ? "الوصف" : "Description")</h6>
-                    <div class="text-muted" style="font-size:0.9rem; line-height:1.7;">@p.Description</div>
+                    <div class="text-muted" style="font-size:0.9rem; line-height:1.7;">@detailDesc</div>
                 </div>
             }
         </div>

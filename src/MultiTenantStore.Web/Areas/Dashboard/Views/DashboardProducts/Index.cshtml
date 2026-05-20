@@ -1,12 +1,15 @@
 @model ProductListViewModel
+@{
+    bool isAr = (Context.Request.Cookies["dash_lang"] ?? "ar") == "ar";
+}
 
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
-        <h5 class="mb-0 fw-bold">المنتجات</h5>
-        <p class="text-muted small mb-0">إدارة منتجات متجرك</p>
+        <h5 class="mb-0 fw-bold">@(isAr ? "المنتجات" : "Products")</h5>
+        <p class="text-muted small mb-0">@(isAr ? "إدارة منتجات متجرك" : "Manage your store products")</p>
     </div>
     <a asp-action="Create" class="btn btn-primary">
-        <i class="bi bi-plus-circle me-1"></i> منتج جديد
+        <i class="bi bi-plus-circle me-1"></i> @(isAr ? "منتج جديد" : "New Product")
     </a>
 </div>
 
@@ -14,7 +17,7 @@
     <div class="card-header d-flex align-items-center gap-2">
         <form method="get" class="d-flex gap-2 flex-grow-1">
             <input type="text" name="search" value="@Model.Search"
-                   class="form-control form-control-sm" placeholder="بحث عن منتج..." />
+                   class="form-control form-control-sm" placeholder="@(isAr ? "بحث عن منتج..." : "Search products...")" />
             <button type="submit" class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-search"></i>
             </button>
@@ -25,17 +28,17 @@
                 </a>
             }
         </form>
-        <span class="text-muted small text-nowrap">@Model.Products.Count منتج</span>
+        <span class="text-muted small text-nowrap">@Model.Products.Count @(isAr ? "منتج" : "products")</span>
     </div>
     <div class="card-body p-0">
         @if (!Model.Products.Any())
         {
             <div class="text-center text-muted py-5">
                 <i class="bi bi-box-seam fs-1 d-block mb-2 opacity-25"></i>
-                <p class="mb-0">لا توجد منتجات@(string.IsNullOrEmpty(Model.Search) ? "" : " تطابق البحث")</p>
+                <p class="mb-0">@(string.IsNullOrEmpty(Model.Search) ? (isAr ? "لا توجد منتجات" : "No products yet") : (isAr ? "لا توجد منتجات تطابق البحث" : "No products match your search"))</p>
                 @if (string.IsNullOrEmpty(Model.Search))
                 {
-                    <a asp-action="Create" class="btn btn-primary mt-3">إضافة أول منتج</a>
+                    <a asp-action="Create" class="btn btn-primary mt-3">@(isAr ? "إضافة أول منتج" : "Add First Product")</a>
                 }
             </div>
         }
@@ -45,12 +48,12 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
-                            <th>المنتج</th>
-                            <th>الرمز (SKU)</th>
-                            <th>السعر</th>
-                            <th>المخزون</th>
-                            <th>الحالة</th>
-                            <th class="text-center">إجراءات</th>
+                            <th>@(isAr ? "المنتج" : "Product")</th>
+                            <th>@(isAr ? "الرمز (SKU)" : "SKU")</th>
+                            <th>@(isAr ? "السعر" : "Price")</th>
+                            <th>@(isAr ? "المخزون" : "Stock")</th>
+                            <th>@(isAr ? "الحالة" : "Status")</th>
+                            <th class="text-center">@(isAr ? "إجراءات" : "Actions")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -82,27 +85,27 @@
                                 <td>
                                     @if (product.IsActive)
                                     {
-                                        <span class="badge bg-success badge-status">نشط</span>
+                                        <span class="badge bg-success badge-status">@(isAr ? "نشط" : "Active")</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary badge-status">معطّل</span>
+                                        <span class="badge bg-secondary badge-status">@(isAr ? "معطّل" : "Inactive")</span>
                                     }
                                     @if (product.IsFeatured)
                                     {
-                                        <span class="badge bg-warning text-dark badge-status ms-1">مميز</span>
+                                        <span class="badge bg-warning text-dark badge-status ms-1">@(isAr ? "مميز" : "Featured")</span>
                                     }
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex justify-content-center gap-1">
                                         <a asp-action="Edit" asp-route-id="@product.Id"
-                                           class="btn btn-action btn-outline-primary" title="تعديل">
+                                           class="btn btn-action btn-outline-primary" title="@(isAr ? "تعديل" : "Edit")">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <form asp-action="Delete" asp-route-id="@product.Id" method="post"
-                                              onsubmit="return confirm('هل أنت متأكد من حذف هذا المنتج؟')">
+                                        <form method="post" action="/Dashboard/DashboardProducts/Delete/@product.Id"
+                                              onsubmit="return confirm('@(isAr ? "هل أنت متأكد من حذف هذا المنتج؟" : "Delete this product?")')">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-action btn-outline-danger" title="حذف">
+                                            <button type="submit" class="btn btn-action btn-outline-danger" title="@(isAr ? "حذف" : "Delete")">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>

@@ -1,58 +1,62 @@
 @model ProductFormViewModel
+@{
+    bool isAr = (Context.Request.Cookies["dash_lang"] ?? "ar") == "ar";
+}
 
 <div class="d-flex align-items-center gap-2 mb-4">
     <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-right"></i>
     </a>
     <div>
-        <h5 class="mb-0 fw-bold">إضافة منتج جديد</h5>
+        <h5 class="mb-0 fw-bold">@(isAr ? "إضافة منتج جديد" : "Add New Product")</h5>
     </div>
 </div>
 
-<form asp-action="Create" method="post">
+<form method="post" action="/Dashboard/DashboardProducts/Create">
     @Html.AntiForgeryToken()
     <div class="row g-3">
         <div class="col-12 col-lg-8">
 
             <div class="card mb-3">
-                <div class="card-header"><i class="bi bi-info-circle me-2 text-primary"></i>معلومات المنتج</div>
+                <div class="card-header"><i class="bi bi-info-circle me-2 text-primary"></i>@(isAr ? "معلومات المنتج" : "Product Information")</div>
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label asp-for="Name" class="form-label fw-medium">الاسم (إنجليزي) <span class="text-danger">*</span></label>
-                            <input asp-for="Name" class="form-control" placeholder="Product Name" />
+                            <label asp-for="Name" class="form-label fw-medium">@(isAr ? "الاسم (إنجليزي)" : "Name (English)") <span class="text-danger">*</span></label>
+                            <input asp-for="Name" id="nameInput" class="form-control" placeholder="Product Name" />
                             <span asp-validation-for="Name" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="NameAr" class="form-label fw-medium">الاسم بالعربي</label>
+                            <label asp-for="NameAr" class="form-label fw-medium">@(isAr ? "الاسم بالعربي" : "Name (Arabic)")</label>
                             <input asp-for="NameAr" class="form-control" placeholder="اسم المنتج" dir="auto" />
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="Slug" class="form-label fw-medium">الرابط المختصر <span class="text-danger">*</span></label>
-                            <input asp-for="Slug" class="form-control" placeholder="product-slug" dir="ltr" />
+                            <label asp-for="Slug" class="form-label fw-medium">@(isAr ? "الرابط المختصر" : "URL Slug") <span class="text-danger">*</span></label>
+                            <input asp-for="Slug" id="slugInput" class="form-control" placeholder="product-slug" dir="ltr" />
+                            <div class="form-text">@(isAr ? "يُولَّد تلقائياً من الاسم الإنجليزي" : "Auto-generated from the English name")</div>
                             <span asp-validation-for="Slug" class="text-danger small"></span>
                         </div>
                         <div class="col-md-6">
-                            <label asp-for="CategoryId" class="form-label fw-medium">الفئة <span class="text-danger">*</span></label>
+                            <label asp-for="CategoryId" class="form-label fw-medium">@(isAr ? "الفئة" : "Category") <span class="text-danger">*</span></label>
                             <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
-                                <option value="">-- اختر الفئة --</option>
+                                <option value="">@(isAr ? "-- اختر الفئة --" : "-- Select Category --")</option>
                             </select>
                             <span asp-validation-for="CategoryId" class="text-danger small"></span>
                         </div>
                         <div class="col-12">
-                            <label asp-for="ShortDescription" class="form-label fw-medium">وصف مختصر</label>
+                            <label asp-for="ShortDescription" class="form-label fw-medium">@(isAr ? "وصف مختصر" : "Short Description")</label>
                             <textarea asp-for="ShortDescription" class="form-control" rows="2" placeholder="Short Description"></textarea>
                         </div>
                         <div class="col-12">
-                            <label asp-for="ShortDescriptionAr" class="form-label fw-medium">وصف مختصر بالعربي</label>
+                            <label asp-for="ShortDescriptionAr" class="form-label fw-medium">@(isAr ? "وصف مختصر بالعربي" : "Short Description (Arabic)")</label>
                             <textarea asp-for="ShortDescriptionAr" class="form-control" rows="2" placeholder="وصف مختصر" dir="auto"></textarea>
                         </div>
                         <div class="col-12">
-                            <label asp-for="Description" class="form-label fw-medium">وصف تفصيلي</label>
+                            <label asp-for="Description" class="form-label fw-medium">@(isAr ? "وصف تفصيلي" : "Full Description")</label>
                             <textarea asp-for="Description" class="form-control" rows="4" placeholder="Full Description"></textarea>
                         </div>
                         <div class="col-12">
-                            <label asp-for="DescriptionAr" class="form-label fw-medium">وصف تفصيلي بالعربي</label>
+                            <label asp-for="DescriptionAr" class="form-label fw-medium">@(isAr ? "وصف تفصيلي بالعربي" : "Full Description (Arabic)")</label>
                             <textarea asp-for="DescriptionAr" class="form-control" rows="4" placeholder="وصف تفصيلي" dir="auto"></textarea>
                         </div>
                     </div>
@@ -60,42 +64,42 @@
             </div>
 
             <div class="card mb-3">
-                <div class="card-header"><i class="bi bi-cash-stack me-2 text-success"></i>التسعير والمخزون</div>
+                <div class="card-header"><i class="bi bi-cash-stack me-2 text-success"></i>@(isAr ? "التسعير والمخزون" : "Pricing & Inventory")</div>
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label asp-for="Price" class="form-label fw-medium">السعر <span class="text-danger">*</span></label>
+                            <label asp-for="Price" class="form-label fw-medium">@(isAr ? "السعر" : "Price") <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <input asp-for="Price" class="form-control" type="number" step="0.01" min="0" />
-                                <span class="input-group-text">ر.س</span>
+                                <span class="input-group-text">@(isAr ? "ر.س" : "SAR")</span>
                             </div>
                             <span asp-validation-for="Price" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="CompareAtPrice" class="form-label fw-medium">سعر المقارنة</label>
+                            <label asp-for="CompareAtPrice" class="form-label fw-medium">@(isAr ? "سعر المقارنة" : "Compare At Price")</label>
                             <div class="input-group">
                                 <input asp-for="CompareAtPrice" class="form-control" type="number" step="0.01" min="0" />
-                                <span class="input-group-text">ر.س</span>
+                                <span class="input-group-text">@(isAr ? "ر.س" : "SAR")</span>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="CostPrice" class="form-label fw-medium">سعر التكلفة</label>
+                            <label asp-for="CostPrice" class="form-label fw-medium">@(isAr ? "سعر التكلفة" : "Cost Price")</label>
                             <div class="input-group">
                                 <input asp-for="CostPrice" class="form-control" type="number" step="0.01" min="0" />
-                                <span class="input-group-text">ر.س</span>
+                                <span class="input-group-text">@(isAr ? "ر.س" : "SAR")</span>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="SKU" class="form-label fw-medium">الرمز (SKU) <span class="text-danger">*</span></label>
+                            <label asp-for="SKU" class="form-label fw-medium">@(isAr ? "الرمز (SKU)" : "SKU") <span class="text-danger">*</span></label>
                             <input asp-for="SKU" class="form-control font-monospace" placeholder="SKU-001" dir="ltr" />
                             <span asp-validation-for="SKU" class="text-danger small"></span>
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="StockQuantity" class="form-label fw-medium">الكمية في المخزون</label>
+                            <label asp-for="StockQuantity" class="form-label fw-medium">@(isAr ? "الكمية في المخزون" : "Stock Quantity")</label>
                             <input asp-for="StockQuantity" class="form-control" type="number" min="0" />
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="LowStockThreshold" class="form-label fw-medium">حد نقص المخزون</label>
+                            <label asp-for="LowStockThreshold" class="form-label fw-medium">@(isAr ? "حد نقص المخزون" : "Low Stock Threshold")</label>
                             <input asp-for="LowStockThreshold" class="form-control" type="number" min="0" />
                         </div>
                     </div>
@@ -106,22 +110,22 @@
 
         <div class="col-12 col-lg-4">
             <div class="card mb-3">
-                <div class="card-header"><i class="bi bi-toggles me-2 text-info"></i>الإعدادات</div>
+                <div class="card-header"><i class="bi bi-toggles me-2 text-info"></i>@(isAr ? "الإعدادات" : "Settings")</div>
                 <div class="card-body">
                     <div class="mb-3 form-check form-switch">
                         <input asp-for="IsActive" class="form-check-input" type="checkbox" />
-                        <label asp-for="IsActive" class="form-check-label">منتج نشط</label>
+                        <label asp-for="IsActive" class="form-check-label">@(isAr ? "منتج نشط" : "Active")</label>
                     </div>
                     <div class="mb-3 form-check form-switch">
                         <input asp-for="IsFeatured" class="form-check-input" type="checkbox" />
-                        <label asp-for="IsFeatured" class="form-check-label">منتج مميز</label>
+                        <label asp-for="IsFeatured" class="form-check-label">@(isAr ? "منتج مميز" : "Featured")</label>
                     </div>
                     <div class="mb-3 form-check form-switch">
                         <input asp-for="TrackInventory" class="form-check-input" type="checkbox" />
-                        <label asp-for="TrackInventory" class="form-check-label">تتبع المخزون</label>
+                        <label asp-for="TrackInventory" class="form-check-label">@(isAr ? "تتبع المخزون" : "Track Inventory")</label>
                     </div>
                     <div class="mb-0">
-                        <label asp-for="SortOrder" class="form-label fw-medium">ترتيب العرض</label>
+                        <label asp-for="SortOrder" class="form-label fw-medium">@(isAr ? "ترتيب العرض" : "Sort Order")</label>
                         <input asp-for="SortOrder" class="form-control" type="number" min="0" />
                     </div>
                 </div>
@@ -129,10 +133,34 @@
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle me-1"></i> حفظ المنتج
+                    <i class="bi bi-check-circle me-1"></i> @(isAr ? "حفظ المنتج" : "Save Product")
                 </button>
-                <a asp-action="Index" class="btn btn-outline-secondary">إلغاء</a>
+                <a asp-action="Index" class="btn btn-outline-secondary">@(isAr ? "إلغاء" : "Cancel")</a>
             </div>
         </div>
     </div>
 </form>
+
+@section Scripts {
+<script>
+(function () {
+    var nameEl = document.getElementById('nameInput');
+    var slugEl = document.getElementById('slugInput');
+    var slugManual = slugEl && slugEl.value.length > 0;
+    if (slugEl) {
+        slugEl.addEventListener('input', function () { slugManual = true; });
+    }
+    if (nameEl && slugEl) {
+        nameEl.addEventListener('input', function () {
+            if (slugManual) return;
+            slugEl.value = nameEl.value.toLowerCase()
+                .replace(/\s+/g, '-')
+                .replace(/[^a-z0-9-]/g, '')
+                .replace(/-+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        });
+    }
+})();
+</script>
+<partial name="_ValidationScriptsPartial" />
+}

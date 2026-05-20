@@ -22,7 +22,7 @@
     <style>
         :root { --store-primary: @primary; --store-secondary: @secondary; }
         * { font-family: 'Tajawal', sans-serif; }
-        body { background: #f8f9fa; }
+        body { background: #f8f9fa; display: flex; flex-direction: column; min-height: 100vh; }
 
         .store-navbar {
             background: #fff;
@@ -78,9 +78,10 @@
             color: white; padding: 2.5rem 0;
         }
 
+        .store-main { flex: 1; }
         .store-footer {
             background: #2d3748; color: rgba(255,255,255,0.7);
-            padding: 1.75rem 0; margin-top: 3.5rem; font-size: 0.85rem;
+            padding: 1.75rem 0; margin-top: auto; font-size: 0.85rem;
         }
 
         .alert { border-radius: 10px; border: none; }
@@ -206,7 +207,9 @@
     </div>
 }
 
+<main class="store-main">
 @RenderBody()
+</main>
 
 <footer class="store-footer">
     <div class="container text-center">

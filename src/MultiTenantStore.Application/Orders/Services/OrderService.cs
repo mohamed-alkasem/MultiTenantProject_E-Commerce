@@ -70,24 +70,36 @@ public sealed class OrderService : IOrderService
             cancellationToken);
 
         if (order is null)
-        {
-            return ApiResponseDto<OrderDto>.Fail("Order was not found.");
-        }
+            return ApiResponseDto<OrderDto>.Fail("الطلب غير موجود.");
 
-        if (!Enum.TryParse<OrderStatus>(dto.Status, true, out var status))
-        {
-            return ApiResponseDto<OrderDto>.Fail("Invalid order status.");
-        }
+        if (order.Status is OrderStatus.Completed or OrderStatus.Cancelled or OrderStatus.Refunded)
+            return ApiResponseDto<OrderDto>.Fail("لا يمكن تغيير حالة طلب مكتمل أو ملغى أو مُسترد.");
 
-        order.Status = status;
+        if (!Enum.TryParse<OrderStatus>(dto.Status, true, out var newStatus))
+            return ApiResponseDto<OrderDto>.Fail("حالة الطلب غير صحيحة.");
+
+        // Enforce forward-only transitions
+        bool validTransition = (order.Status, newStatus) switch
+        {
+            (OrderStatus.Pending,    OrderStatus.Confirmed)  => true,
+            (OrderStatus.Pending,    OrderStatus.Cancelled)  => true,
+            (OrderStatus.Confirmed,  OrderStatus.Processing) => true,
+            (OrderStatus.Confirmed,  OrderStatus.Cancelled)  => true,
+            (OrderStatus.Processing, OrderStatus.Completed)  => true,
+            (OrderStatus.Processing, OrderStatus.Cancelled)  => true,
+            _ => false
+        };
+
+        if (!validTransition)
+            return ApiResponseDto<OrderDto>.Fail($"لا يمكن الانتقال من '{order.Status}' إلى '{newStatus}'.");
+
+        order.Status = newStatus;
         order.UpdatedAt = DateTime.UtcNow;
 
         _orderRepository.Update(order);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ApiResponseDto<OrderDto>.Ok(
-            MapToDto(order),
-            "Order status updated successfully.");
+        return ApiResponseDto<OrderDto>.Ok(MapToDto(order), "تم تحديث حالة الطلب بنجاح.");
     }
 
     public async Task<ApiResponseDto<OrderDto>> UpdatePaymentStatusAsync(
@@ -99,35 +111,45 @@ public sealed class OrderService : IOrderService
             cancellationToken);
 
         if (order is null)
-        {
-            return ApiResponseDto<OrderDto>.Fail("Order was not found.");
-        }
+            return ApiResponseDto<OrderDto>.Fail("الطلب غير موجود.");
 
-        if (!Enum.TryParse<PaymentStatus>(dto.PaymentStatus, true, out var paymentStatus))
-        {
-            return ApiResponseDto<OrderDto>.Fail("Invalid payment status.");
-        }
+        if (order.PaymentStatus is PaymentStatus.Refunded or PaymentStatus.PartiallyRefunded)
+            return ApiResponseDto<OrderDto>.Fail("لا يمكن تغيير حالة دفع مُسترد.");
 
-        order.PaymentStatus = paymentStatus;
+        if (!Enum.TryParse<PaymentStatus>(dto.PaymentStatus, true, out var newStatus))
+            return ApiResponseDto<OrderDto>.Fail("حالة الدفع غير صحيحة.");
+
+        // Enforce valid payment transitions
+        bool validTransition = (order.PaymentStatus, newStatus) switch
+        {
+            (PaymentStatus.Pending, PaymentStatus.Paid)              => true,
+            (PaymentStatus.Pending, PaymentStatus.Failed)            => true,
+            (PaymentStatus.Failed,  PaymentStatus.Pending)           => true,
+            (PaymentStatus.Failed,  PaymentStatus.Paid)              => true,
+            (PaymentStatus.Paid,    PaymentStatus.Refunded)          => true,
+            (PaymentStatus.Paid,    PaymentStatus.PartiallyRefunded) => true,
+            _ => false
+        };
+
+        if (!validTransition)
+            return ApiResponseDto<OrderDto>.Fail($"لا يمكن الانتقال من '{order.PaymentStatus}' إلى '{newStatus}'.");
+
+        order.PaymentStatus = newStatus;
         order.UpdatedAt = DateTime.UtcNow;
 
         foreach (var payment in order.Payments.Where(x => x.DeletedAt == null))
         {
-            payment.Status = paymentStatus;
+            payment.Status = newStatus;
             payment.UpdatedAt = DateTime.UtcNow;
 
-            if (paymentStatus.ToString().Equals("Paid", StringComparison.OrdinalIgnoreCase))
-            {
+            if (newStatus == PaymentStatus.Paid)
                 payment.PaidAt ??= DateTime.UtcNow;
-            }
         }
 
         _orderRepository.Update(order);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ApiResponseDto<OrderDto>.Ok(
-            MapToDto(order),
-            "Payment status updated successfully.");
+        return ApiResponseDto<OrderDto>.Ok(MapToDto(order), "تم تحديث حالة الدفع بنجاح.");
     }
 
     public async Task<ApiResponseDto<OrderDto>> UpdateShippingStatusAsync(
@@ -139,24 +161,37 @@ public sealed class OrderService : IOrderService
             cancellationToken);
 
         if (order is null)
-        {
-            return ApiResponseDto<OrderDto>.Fail("Order was not found.");
-        }
+            return ApiResponseDto<OrderDto>.Fail("الطلب غير موجود.");
 
-        if (!Enum.TryParse<ShippingStatus>(dto.ShippingStatus, true, out var shippingStatus))
-        {
-            return ApiResponseDto<OrderDto>.Fail("Invalid shipping status.");
-        }
+        if (order.ShippingStatus is ShippingStatus.Delivered or ShippingStatus.Returned)
+            return ApiResponseDto<OrderDto>.Fail("لا يمكن تغيير حالة شحنة تم توصيلها أو إعادتها.");
 
-        order.ShippingStatus = shippingStatus;
+        if (!Enum.TryParse<ShippingStatus>(dto.ShippingStatus, true, out var newStatus))
+            return ApiResponseDto<OrderDto>.Fail("حالة الشحن غير صحيحة.");
+
+        // Enforce valid shipping transitions
+        bool validTransition = (order.ShippingStatus, newStatus) switch
+        {
+            (ShippingStatus.NotShipped, ShippingStatus.Processing)  => true,
+            (ShippingStatus.NotShipped, ShippingStatus.Cancelled)   => true,
+            (ShippingStatus.Processing, ShippingStatus.Shipped)     => true,
+            (ShippingStatus.Processing, ShippingStatus.Cancelled)   => true,
+            (ShippingStatus.Shipped,    ShippingStatus.Delivered)   => true,
+            (ShippingStatus.Shipped,    ShippingStatus.Returned)    => true,
+            (ShippingStatus.Cancelled,  ShippingStatus.NotShipped)  => true,
+            _ => false
+        };
+
+        if (!validTransition)
+            return ApiResponseDto<OrderDto>.Fail($"لا يمكن الانتقال من '{order.ShippingStatus}' إلى '{newStatus}'.");
+
+        order.ShippingStatus = newStatus;
         order.UpdatedAt = DateTime.UtcNow;
 
         _orderRepository.Update(order);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ApiResponseDto<OrderDto>.Ok(
-            MapToDto(order),
-            "Shipping status updated successfully.");
+        return ApiResponseDto<OrderDto>.Ok(MapToDto(order), "تم تحديث حالة الشحن بنجاح.");
     }
 
     private static OrderListDto MapToListDto(Order order)

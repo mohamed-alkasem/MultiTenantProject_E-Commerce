@@ -6,13 +6,13 @@ using MultiTenantStore.Application.Catalog.Services;
 namespace MultiTenantStore.Web.Controllers.Api.Dashboard;
 
 [ApiController]
-[Authorize]
+[Authorize(AuthenticationSchemes = "Bearer")]
 [Route("api/dashboard/products")]
-public sealed class DashboardProductsController : ControllerBase
+public sealed class DashboardProductsApiController : ControllerBase
 {
     private readonly IProductService _productService;
 
-    public DashboardProductsController(IProductService productService)
+    public DashboardProductsApiController(IProductService productService)
     {
         _productService = productService;
     }

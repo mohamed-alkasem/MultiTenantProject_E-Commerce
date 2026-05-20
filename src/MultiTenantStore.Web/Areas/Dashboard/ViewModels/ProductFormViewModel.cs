@@ -45,4 +45,5 @@ public sealed class ProductFormViewModel
     public int SortOrder { get; set; }
 
     public List<SelectListItem> Categories { get; set; } = new();
+    public List<ProductImageDto> Images { get; set; } = new();
 }

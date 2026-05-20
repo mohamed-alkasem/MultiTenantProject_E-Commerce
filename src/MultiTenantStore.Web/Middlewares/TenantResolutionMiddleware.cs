@@ -25,6 +25,21 @@ public sealed class TenantResolutionMiddleware
     {
         var path = context.Request.Path;
 
+        // For ANY dashboard-related path (including excluded sub-paths such as
+        // /Dashboard/DashboardAccount/Logout and /Dashboard/DashboardAccount/SetLanguage),
+        // authenticate via cookie before the excluded-path short-circuit so that
+        // context.User matches the identity that was used to generate antiforgery tokens.
+        var isDashboardRelated =
+            path.StartsWithSegments("/dashboard", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWithSegments("/api/dashboard", StringComparison.OrdinalIgnoreCase);
+
+        if (isDashboardRelated && context.User.FindFirst(TenantClaimTypes.StoreId) is null)
+        {
+            var cookieAuth = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+            if (cookieAuth.Succeeded && cookieAuth.Principal is not null)
+                context.User = cookieAuth.Principal;
+        }
+
         if (routeRules.IsExcludedPath(path))
         {
             await _next(context);
@@ -35,14 +50,7 @@ public sealed class TenantResolutionMiddleware
         {
             var isMvcPath = !path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
 
-            if (isMvcPath)
-            {
-                // Default scheme is JWT Bearer, so we must explicitly authenticate
-                // with the Identity cookie scheme for MVC dashboard routes
-                var cookieAuth = await context.AuthenticateAsync(IdentityConstants.ApplicationScheme);
-                if (cookieAuth.Succeeded && cookieAuth.Principal is not null)
-                    context.User = cookieAuth.Principal;
-            }
+            // Cookie auth already attempted above for all dashboard-related paths.
 
             var hasStoreClaim = context.User.FindFirst(TenantClaimTypes.StoreId) is not null;
 
@@ -62,6 +70,7 @@ public sealed class TenantResolutionMiddleware
 
             var resolved = await ResolveFromClaimsAsync(
                 context,
+                isMvcPath,
                 claimsTenantResolver,
                 tenantStore,
                 tenantAccessValidator,
@@ -69,7 +78,6 @@ public sealed class TenantResolutionMiddleware
 
             if (!resolved)
             {
-                // For MVC paths, redirect to login instead of returning raw error text
                 if (isMvcPath && !context.Response.HasStarted)
                 {
                     context.Response.Redirect(
@@ -104,6 +112,7 @@ public sealed class TenantResolutionMiddleware
 
     private static async Task<bool> ResolveFromClaimsAsync(
         HttpContext context,
+        bool isMvcPath,
         IClaimsTenantResolver claimsTenantResolver,
         ITenantStore tenantStore,
         ITenantAccessValidator tenantAccessValidator,
@@ -113,8 +122,11 @@ public sealed class TenantResolutionMiddleware
 
         if (!result.Success || result.StoreId is null || result.UserId is null)
         {
-            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-            await context.Response.WriteAsync("Tenant claims are missing or invalid.");
+            if (!isMvcPath)
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Tenant claims are missing or invalid.");
+            }
             return false;
         }
 
@@ -125,8 +137,11 @@ public sealed class TenantResolutionMiddleware
 
         if (!canAccess)
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsync("You do not have access to this store.");
+            if (!isMvcPath)
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await context.Response.WriteAsync("You do not have access to this store.");
+            }
             return false;
         }
 
@@ -136,15 +151,21 @@ public sealed class TenantResolutionMiddleware
 
         if (tenant is null)
         {
-            context.Response.StatusCode = StatusCodes.Status404NotFound;
-            await context.Response.WriteAsync("Store was not found.");
+            if (!isMvcPath)
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                await context.Response.WriteAsync("Store was not found.");
+            }
             return false;
         }
 
         if (!tenant.IsActive)
         {
-            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsync("Store is not active.");
+            if (!isMvcPath)
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await context.Response.WriteAsync("Store is not active.");
+            }
             return false;
         }
 

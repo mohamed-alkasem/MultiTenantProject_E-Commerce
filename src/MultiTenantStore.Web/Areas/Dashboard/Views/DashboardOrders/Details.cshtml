@@ -1,6 +1,41 @@
 @model OrderDetailsViewModel
 @{
+    bool isAr = (Context.Request.Cookies["dash_lang"] ?? "ar") == "ar";
     var order = Model.Order;
+
+    bool orderTerminal   = order.Status is "Completed" or "Cancelled" or "Refunded";
+    bool paymentTerminal = order.PaymentStatus is "Refunded";
+    bool shippingTerminal = order.ShippingStatus is "Delivered" or "Returned";
+
+    string OrderStatusLabel(string s) => s switch
+    {
+        "Pending"    => isAr ? "معلق"        : "Pending",
+        "Confirmed"  => isAr ? "مؤكد"         : "Confirmed",
+        "Processing" => isAr ? "قيد التنفيذ" : "Processing",
+        "Completed"  => isAr ? "مكتمل"       : "Completed",
+        "Cancelled"  => isAr ? "ملغى"         : "Cancelled",
+        "Refunded"   => isAr ? "مُسترد"       : "Refunded",
+        _            => s
+    };
+    string PayStatusLabel(string s) => s switch
+    {
+        "Pending"           => isAr ? "غير مدفوع"     : "Unpaid",
+        "Paid"              => isAr ? "مدفوع"          : "Paid",
+        "Failed"            => isAr ? "فشل"            : "Failed",
+        "Refunded"          => isAr ? "مُسترد"         : "Refunded",
+        "PartiallyRefunded" => isAr ? "مسترد جزئياً" : "Partial Refund",
+        _                   => s
+    };
+    string ShipStatusLabel(string s) => s switch
+    {
+        "NotShipped" => isAr ? "لم يُشحن"     : "Not Shipped",
+        "Processing" => isAr ? "جاري التجهيز" : "Preparing",
+        "Shipped"    => isAr ? "تم الشحن"     : "Shipped",
+        "Delivered"  => isAr ? "تم التوصيل"   : "Delivered",
+        "Cancelled"  => isAr ? "ملغى"          : "Cancelled",
+        "Returned"   => isAr ? "مُعاد"         : "Returned",
+        _            => s
+    };
 }
 
 <div class="d-flex align-items-center gap-2 mb-4">
@@ -8,7 +43,7 @@
         <i class="bi bi-arrow-right"></i>
     </a>
     <div>
-        <h5 class="mb-0 fw-bold">طلب #@order.OrderNumber</h5>
+        <h5 class="mb-0 fw-bold">@(isAr ? "طلب" : "Order") #@order.OrderNumber</h5>
         <small class="text-muted">@order.CreatedAt.ToString("yyyy/MM/dd HH:mm")</small>
     </div>
 </div>
@@ -16,16 +51,16 @@
 <div class="row g-3">
     <div class="col-12 col-lg-8">
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-box-seam me-2 text-primary"></i>المنتجات</div>
+            <div class="card-header"><i class="bi bi-box-seam me-2 text-primary"></i>@(isAr ? "المنتجات" : "Items")</div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table mb-0">
                         <thead class="bg-light">
                             <tr>
-                                <th>المنتج</th>
-                                <th>الكمية</th>
-                                <th>السعر</th>
-                                <th>الإجمالي</th>
+                                <th>@(isAr ? "المنتج" : "Product")</th>
+                                <th>@(isAr ? "الكمية" : "Qty")</th>
+                                <th>@(isAr ? "السعر" : "Unit Price")</th>
+                                <th>@(isAr ? "الإجمالي" : "Total")</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -48,32 +83,32 @@
                         </tbody>
                         <tfoot class="bg-light">
                             <tr>
-                                <td colspan="3" class="text-end fw-medium">المجموع الفرعي</td>
+                                <td colspan="3" class="text-end fw-medium">@(isAr ? "المجموع الفرعي" : "Subtotal")</td>
                                 <td>@order.Subtotal.ToString("N2")</td>
                             </tr>
                             @if (order.DiscountAmount > 0)
                             {
                                 <tr>
-                                    <td colspan="3" class="text-end text-success">الخصم</td>
+                                    <td colspan="3" class="text-end text-success">@(isAr ? "الخصم" : "Discount")</td>
                                     <td class="text-success">-@order.DiscountAmount.ToString("N2")</td>
                                 </tr>
                             }
                             @if (order.ShippingAmount > 0)
                             {
                                 <tr>
-                                    <td colspan="3" class="text-end">الشحن</td>
+                                    <td colspan="3" class="text-end">@(isAr ? "الشحن" : "Shipping")</td>
                                     <td>@order.ShippingAmount.ToString("N2")</td>
                                 </tr>
                             }
                             @if (order.TaxAmount > 0)
                             {
                                 <tr>
-                                    <td colspan="3" class="text-end">الضريبة</td>
+                                    <td colspan="3" class="text-end">@(isAr ? "الضريبة" : "Tax")</td>
                                     <td>@order.TaxAmount.ToString("N2")</td>
                                 </tr>
                             }
                             <tr>
-                                <td colspan="3" class="text-end fw-bold fs-6">الإجمالي</td>
+                                <td colspan="3" class="text-end fw-bold fs-6">@(isAr ? "الإجمالي" : "Total")</td>
                                 <td class="fw-bold fs-6">@order.TotalAmount.ToString("N2") @order.Currency</td>
                             </tr>
                         </tfoot>
@@ -85,7 +120,7 @@
         <div class="row g-3">
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header"><i class="bi bi-geo-alt me-2 text-info"></i>عنوان الشحن</div>
+                    <div class="card-header"><i class="bi bi-geo-alt me-2 text-info"></i>@(isAr ? "عنوان الشحن" : "Shipping Address")</div>
                     <div class="card-body small">
                         <p class="fw-medium mb-1">@order.ShippingAddress.FullName</p>
                         <p class="mb-1">@order.ShippingAddress.Phone</p>
@@ -100,7 +135,7 @@
             </div>
             <div class="col-md-6">
                 <div class="card">
-                    <div class="card-header"><i class="bi bi-receipt me-2 text-warning"></i>عنوان الفاتورة</div>
+                    <div class="card-header"><i class="bi bi-receipt me-2 text-warning"></i>@(isAr ? "عنوان الفاتورة" : "Billing Address")</div>
                     <div class="card-body small">
                         <p class="fw-medium mb-1">@order.BillingAddress.FullName</p>
                         <p class="mb-1">@order.BillingAddress.Phone</p>
@@ -114,63 +149,156 @@
 
     <div class="col-12 col-lg-4">
         <div class="card mb-3">
-            <div class="card-header"><i class="bi bi-info-circle me-2"></i>حالة الطلب</div>
+            <div class="card-header"><i class="bi bi-info-circle me-2"></i>@(isAr ? "حالة الطلب" : "Order Status")</div>
             <div class="card-body">
+
+                @* Order Status *@
                 <div class="mb-3">
-                    <label class="form-label small fw-medium text-muted">حالة الطلب</label>
-                    <form asp-action="UpdateStatus" asp-route-id="@order.Id" method="post">
-                        @Html.AntiForgeryToken()
-                        <div class="input-group input-group-sm">
-                            <select name="newStatus" class="form-select">
-                                <option value="Pending" selected="@(order.Status == "Pending")">معلق</option>
-                                <option value="Processing" selected="@(order.Status == "Processing")">قيد التنفيذ</option>
-                                <option value="Completed" selected="@(order.Status == "Completed")">مكتمل</option>
-                                <option value="Cancelled" selected="@(order.Status == "Cancelled")">ملغى</option>
-                            </select>
-                            <button type="submit" class="btn btn-outline-primary">تحديث</button>
-                        </div>
-                    </form>
+                    <label class="form-label small fw-medium text-muted">@(isAr ? "حالة الطلب الحالية" : "Current Order Status")</label>
+                    @if (orderTerminal)
+                    {
+                        var orderBadgeClass = order.Status switch
+                        {
+                            "Completed" => "bg-success",
+                            "Cancelled" => "bg-danger",
+                            "Refunded"  => "bg-warning text-dark",
+                            _           => "bg-secondary"
+                        };
+                        <div><span class="badge @orderBadgeClass">@OrderStatusLabel(order.Status)</span>
+                            <small class="text-muted ms-1">@(isAr ? "لا يمكن تغيير الحالة" : "Cannot change status")</small></div>
+                    }
+                    else
+                    {
+                        <form asp-area="Dashboard" asp-controller="DashboardOrders" asp-action="UpdateStatus"
+                              asp-route-id="@order.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="input-group input-group-sm">
+                                <select name="newStatus" class="form-select">
+                                    @if (order.Status == "Pending")
+                                    {
+                                        <option value="Pending" selected>@(isAr ? "معلق (حالي)" : "Pending (current)")</option>
+                                        <option value="Confirmed">@(isAr ? "مؤكد" : "Confirmed")</option>
+                                        <option value="Cancelled">@(isAr ? "ملغى" : "Cancelled")</option>
+                                    }
+                                    else if (order.Status == "Confirmed")
+                                    {
+                                        <option value="Confirmed" selected>@(isAr ? "مؤكد (حالي)" : "Confirmed (current)")</option>
+                                        <option value="Processing">@(isAr ? "قيد التنفيذ" : "Processing")</option>
+                                        <option value="Cancelled">@(isAr ? "ملغى" : "Cancelled")</option>
+                                    }
+                                    else if (order.Status == "Processing")
+                                    {
+                                        <option value="Processing" selected>@(isAr ? "قيد التنفيذ (حالي)" : "Processing (current)")</option>
+                                        <option value="Completed">@(isAr ? "مكتمل" : "Completed")</option>
+                                        <option value="Cancelled">@(isAr ? "ملغى" : "Cancelled")</option>
+                                    }
+                                </select>
+                                <button type="submit" class="btn btn-outline-primary btn-sm">@(isAr ? "تحديث" : "Update")</button>
+                            </div>
+                        </form>
+                    }
                 </div>
 
+                @* Payment Status *@
                 <div class="mb-3">
-                    <label class="form-label small fw-medium text-muted">حالة الدفع</label>
-                    <form asp-action="UpdatePaymentStatus" asp-route-id="@order.Id" method="post">
-                        @Html.AntiForgeryToken()
-                        <div class="input-group input-group-sm">
-                            <select name="newStatus" class="form-select">
-                                <option value="Pending" selected="@(order.PaymentStatus == "Pending")">غير مدفوع</option>
-                                <option value="Paid" selected="@(order.PaymentStatus == "Paid")">مدفوع</option>
-                                <option value="Refunded" selected="@(order.PaymentStatus == "Refunded")">مُسترد</option>
-                                <option value="Failed" selected="@(order.PaymentStatus == "Failed")">فشل</option>
-                            </select>
-                            <button type="submit" class="btn btn-outline-success">تحديث</button>
-                        </div>
-                    </form>
+                    <label class="form-label small fw-medium text-muted">@(isAr ? "حالة الدفع الحالية" : "Current Payment Status")</label>
+                    @if (paymentTerminal)
+                    {
+                        <div><span class="badge bg-warning text-dark">@PayStatusLabel(order.PaymentStatus)</span>
+                            <small class="text-muted ms-1">@(isAr ? "لا يمكن تغيير حالة الدفع" : "Cannot change payment status")</small></div>
+                    }
+                    else
+                    {
+                        <form asp-area="Dashboard" asp-controller="DashboardOrders" asp-action="UpdatePaymentStatus"
+                              asp-route-id="@order.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="input-group input-group-sm">
+                                <select name="newStatus" class="form-select">
+                                    @if (order.PaymentStatus == "Pending")
+                                    {
+                                        <option value="Pending" selected>@(isAr ? "غير مدفوع (حالي)" : "Unpaid (current)")</option>
+                                        <option value="Paid">@(isAr ? "مدفوع" : "Paid")</option>
+                                        <option value="Failed">@(isAr ? "فشل الدفع" : "Failed")</option>
+                                    }
+                                    else if (order.PaymentStatus == "Failed")
+                                    {
+                                        <option value="Failed" selected>@(isAr ? "فشل الدفع (حالي)" : "Failed (current)")</option>
+                                        <option value="Pending">@(isAr ? "غير مدفوع" : "Unpaid")</option>
+                                        <option value="Paid">@(isAr ? "مدفوع" : "Paid")</option>
+                                    }
+                                    else if (order.PaymentStatus == "Paid")
+                                    {
+                                        <option value="Paid" selected>@(isAr ? "مدفوع (حالي)" : "Paid (current)")</option>
+                                        <option value="Refunded">@(isAr ? "مُسترد" : "Refunded")</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@order.PaymentStatus" selected>@PayStatusLabel(order.PaymentStatus) (@(isAr ? "حالي" : "current"))</option>
+                                    }
+                                </select>
+                                <button type="submit" class="btn btn-outline-success btn-sm">@(isAr ? "تحديث" : "Update")</button>
+                            </div>
+                        </form>
+                    }
                 </div>
 
+                @* Shipping Status *@
                 <div>
-                    <label class="form-label small fw-medium text-muted">حالة الشحن</label>
-                    <form asp-action="UpdateShippingStatus" asp-route-id="@order.Id" method="post">
-                        @Html.AntiForgeryToken()
-                        <div class="input-group input-group-sm">
-                            <select name="newStatus" class="form-select">
-                                <option value="Pending" selected="@(order.ShippingStatus == "Pending")">لم يُشحن</option>
-                                <option value="Processing" selected="@(order.ShippingStatus == "Processing")">جاري الشحن</option>
-                                <option value="Shipped" selected="@(order.ShippingStatus == "Shipped")">تم الشحن</option>
-                                <option value="Delivered" selected="@(order.ShippingStatus == "Delivered")">تم التوصيل</option>
-                                <option value="Returned" selected="@(order.ShippingStatus == "Returned")">مُعاد</option>
-                            </select>
-                            <button type="submit" class="btn btn-outline-info">تحديث</button>
-                        </div>
-                    </form>
+                    <label class="form-label small fw-medium text-muted">@(isAr ? "حالة الشحن الحالية" : "Current Shipping Status")</label>
+                    @if (shippingTerminal)
+                    {
+                        var shipBadgeClass = order.ShippingStatus == "Delivered" ? "bg-success" : "bg-secondary";
+                        <div><span class="badge @shipBadgeClass">@ShipStatusLabel(order.ShippingStatus)</span>
+                            <small class="text-muted ms-1">@(isAr ? "لا يمكن تغيير حالة الشحن" : "Cannot change shipping status")</small></div>
+                    }
+                    else
+                    {
+                        <form asp-area="Dashboard" asp-controller="DashboardOrders" asp-action="UpdateShippingStatus"
+                              asp-route-id="@order.Id" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="input-group input-group-sm">
+                                <select name="newStatus" class="form-select">
+                                    @if (order.ShippingStatus == "NotShipped")
+                                    {
+                                        <option value="NotShipped" selected>@(isAr ? "لم يُشحن (حالي)" : "Not Shipped (current)")</option>
+                                        <option value="Processing">@(isAr ? "جاري التجهيز" : "Preparing")</option>
+                                        <option value="Cancelled">@(isAr ? "ملغى" : "Cancelled")</option>
+                                    }
+                                    else if (order.ShippingStatus == "Processing")
+                                    {
+                                        <option value="Processing" selected>@(isAr ? "جاري التجهيز (حالي)" : "Preparing (current)")</option>
+                                        <option value="Shipped">@(isAr ? "تم الشحن" : "Shipped")</option>
+                                        <option value="Cancelled">@(isAr ? "ملغى" : "Cancelled")</option>
+                                    }
+                                    else if (order.ShippingStatus == "Shipped")
+                                    {
+                                        <option value="Shipped" selected>@(isAr ? "تم الشحن (حالي)" : "Shipped (current)")</option>
+                                        <option value="Delivered">@(isAr ? "تم التوصيل" : "Delivered")</option>
+                                        <option value="Returned">@(isAr ? "مُعاد" : "Returned")</option>
+                                    }
+                                    else if (order.ShippingStatus == "Cancelled")
+                                    {
+                                        <option value="Cancelled" selected>@(isAr ? "ملغى (حالي)" : "Cancelled (current)")</option>
+                                        <option value="NotShipped">@(isAr ? "لم يُشحن" : "Not Shipped")</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@order.ShippingStatus" selected>@ShipStatusLabel(order.ShippingStatus) (@(isAr ? "حالي" : "current"))</option>
+                                    }
+                                </select>
+                                <button type="submit" class="btn btn-outline-info btn-sm">@(isAr ? "تحديث" : "Update")</button>
+                            </div>
+                        </form>
+                    }
                 </div>
+
             </div>
         </div>
 
         @if (order.CustomerId.HasValue)
         {
             <div class="card mb-3">
-                <div class="card-header"><i class="bi bi-person me-2 text-secondary"></i>العميل</div>
+                <div class="card-header"><i class="bi bi-person me-2 text-secondary"></i>@(isAr ? "العميل" : "Customer")</div>
                 <div class="card-body small">
                     <p class="fw-medium mb-1">@order.CustomerName</p>
                 </div>
@@ -180,7 +308,7 @@
         @if (order.Payments.Any())
         {
             <div class="card mb-3">
-                <div class="card-header"><i class="bi bi-credit-card me-2 text-success"></i>المدفوعات</div>
+                <div class="card-header"><i class="bi bi-credit-card me-2 text-success"></i>@(isAr ? "المدفوعات" : "Payments")</div>
                 <div class="card-body p-0">
                     @foreach (var payment in order.Payments)
                     {
@@ -189,7 +317,7 @@
                                 <span class="small">@payment.PaymentMethod</span>
                                 <span class="small fw-medium">@payment.Amount.ToString("N2") @payment.Currency</span>
                             </div>
-                            <div class="text-muted" style="font-size: 0.75rem;">@payment.Status</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">@PayStatusLabel(payment.Status)</div>
                         </div>
                     }
                 </div>
@@ -197,25 +325,25 @@
         }
 
         <div class="card">
-            <div class="card-header"><i class="bi bi-file-earmark-text me-2 text-warning"></i>الفاتورة / Invoice</div>
+            <div class="card-header"><i class="bi bi-file-earmark-text me-2 text-warning"></i>@(isAr ? "الفاتورة" : "Invoice")</div>
             <div class="card-body">
                 @if (!string.IsNullOrEmpty(order.InvoiceNumber))
                 {
                     <p class="small mb-2">
-                        <span class="text-muted">رقم الفاتورة:</span>
+                        <span class="text-muted">@(isAr ? "رقم الفاتورة:" : "Invoice #:")</span>
                         <strong class="ms-1">@order.InvoiceNumber</strong>
                     </p>
                     <div class="d-grid gap-2">
                         @if (!string.IsNullOrEmpty(order.InvoicePdfUrl))
                         {
                             <a href="@order.InvoicePdfUrl" target="_blank" class="btn btn-sm btn-success">
-                                <i class="bi bi-download me-1"></i>تحميل PDF / Download PDF
+                                <i class="bi bi-download me-1"></i>@(isAr ? "تحميل PDF" : "Download PDF")
                             </a>
                         }
                         <a asp-area="Dashboard" asp-controller="DashboardInvoices"
                            asp-action="Details" asp-route-id="@order.InvoiceId"
                            class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-eye me-1"></i>عرض الفاتورة / View Invoice
+                            <i class="bi bi-eye me-1"></i>@(isAr ? "عرض الفاتورة" : "View Invoice")
                         </a>
                         @if (string.IsNullOrEmpty(order.InvoicePdfUrl))
                         {
@@ -223,7 +351,7 @@
                                   asp-action="GeneratePdf" asp-route-id="@order.InvoiceId" method="post">
                                 @Html.AntiForgeryToken()
                                 <button type="submit" class="btn btn-sm btn-outline-warning w-100">
-                                    <i class="bi bi-file-earmark-pdf me-1"></i>إنشاء PDF / Generate PDF
+                                    <i class="bi bi-file-earmark-pdf me-1"></i>@(isAr ? "إنشاء PDF" : "Generate PDF")
                                 </button>
                             </form>
                         }
@@ -231,13 +359,13 @@
                 }
                 else
                 {
-                    <p class="text-muted small mb-2">لا توجد فاتورة بعد / No invoice yet</p>
+                    <p class="text-muted small mb-2">@(isAr ? "لا توجد فاتورة بعد" : "No invoice yet")</p>
                     <form asp-area="Dashboard" asp-controller="DashboardInvoices"
                           asp-action="CreateForOrder" method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="orderId" value="@order.Id" />
                         <button type="submit" class="btn btn-sm btn-outline-primary w-100">
-                            <i class="bi bi-plus-circle me-1"></i>إنشاء فاتورة / Create Invoice
+                            <i class="bi bi-plus-circle me-1"></i>@(isAr ? "إنشاء فاتورة" : "Create Invoice")
                         </button>
                     </form>
                 }

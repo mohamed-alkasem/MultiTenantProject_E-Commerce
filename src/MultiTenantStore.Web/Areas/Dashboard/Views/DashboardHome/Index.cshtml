@@ -1,4 +1,7 @@
 @model DashboardHomeViewModel
+@{
+    bool isAr = (Context.Request.Cookies["dash_lang"] ?? "ar") == "ar";
+}
 
 <div class="row g-3 mb-4">
     <div class="col-6 col-xl-3">
@@ -8,7 +11,7 @@
                     <i class="bi bi-box-seam"></i>
                 </div>
                 <div>
-                    <div class="text-muted small">المنتجات</div>
+                    <div class="text-muted small">@(isAr ? "المنتجات" : "Products")</div>
                     <div class="fs-4 fw-bold">@Model.TotalProducts</div>
                 </div>
             </div>
@@ -21,7 +24,7 @@
                     <i class="bi bi-bag-check"></i>
                 </div>
                 <div>
-                    <div class="text-muted small">إجمالي الطلبات</div>
+                    <div class="text-muted small">@(isAr ? "إجمالي الطلبات" : "Total Orders")</div>
                     <div class="fs-4 fw-bold">@Model.TotalOrders</div>
                 </div>
             </div>
@@ -34,7 +37,7 @@
                     <i class="bi bi-clock-history"></i>
                 </div>
                 <div>
-                    <div class="text-muted small">طلبات معلقة</div>
+                    <div class="text-muted small">@(isAr ? "طلبات معلقة" : "Pending Orders")</div>
                     <div class="fs-4 fw-bold">@Model.PendingOrders</div>
                 </div>
             </div>
@@ -47,7 +50,7 @@
                     <i class="bi bi-currency-dollar"></i>
                 </div>
                 <div>
-                    <div class="text-muted small">الإيرادات</div>
+                    <div class="text-muted small">@(isAr ? "الإيرادات" : "Revenue")</div>
                     <div class="fs-5 fw-bold">@Model.TotalRevenue.ToString("N2") @Model.Currency</div>
                 </div>
             </div>
@@ -59,16 +62,16 @@
     <div class="col-12 col-lg-8">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <span><i class="bi bi-clock-history text-primary me-2"></i>آخر الطلبات</span>
+                <span><i class="bi bi-clock-history text-primary me-2"></i>@(isAr ? "آخر الطلبات" : "Recent Orders")</span>
                 <a asp-area="Dashboard" asp-controller="DashboardOrders" asp-action="Index"
-                   class="btn btn-sm btn-outline-primary">عرض الكل</a>
+                   class="btn btn-sm btn-outline-primary">@(isAr ? "عرض الكل" : "View All")</a>
             </div>
             <div class="card-body p-0">
                 @if (!Model.RecentOrders.Any())
                 {
                     <div class="text-center text-muted py-5">
                         <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                        لا توجد طلبات حتى الآن
+                        @(isAr ? "لا توجد طلبات حتى الآن" : "No orders yet")
                     </div>
                 }
                 else
@@ -77,11 +80,11 @@
                         <table class="table table-hover mb-0">
                             <thead class="bg-light">
                                 <tr>
-                                    <th>رقم الطلب</th>
-                                    <th>العميل</th>
-                                    <th>الحالة</th>
-                                    <th>المبلغ</th>
-                                    <th>التاريخ</th>
+                                    <th>@(isAr ? "رقم الطلب" : "Order #")</th>
+                                    <th>@(isAr ? "العميل" : "Customer")</th>
+                                    <th>@(isAr ? "الحالة" : "Status")</th>
+                                    <th>@(isAr ? "المبلغ" : "Amount")</th>
+                                    <th>@(isAr ? "التاريخ" : "Date")</th>
                                     <th></th>
                                 </tr>
                             </thead>
@@ -95,22 +98,24 @@
                                             @{
                                                 var statusClass = order.Status switch
                                                 {
-                                                    "Pending" => "bg-warning text-dark",
+                                                    "Pending"    => "bg-warning text-dark",
+                                                    "Confirmed"  => "bg-info text-dark",
                                                     "Processing" => "bg-info text-dark",
-                                                    "Completed" => "bg-success",
-                                                    "Cancelled" => "bg-danger",
-                                                    _ => "bg-secondary"
+                                                    "Completed"  => "bg-success",
+                                                    "Cancelled"  => "bg-danger",
+                                                    _            => "bg-secondary"
                                                 };
-                                                var statusAr = order.Status switch
+                                                var statusLabel = order.Status switch
                                                 {
-                                                    "Pending" => "معلق",
-                                                    "Processing" => "قيد التنفيذ",
-                                                    "Completed" => "مكتمل",
-                                                    "Cancelled" => "ملغى",
-                                                    _ => order.Status
+                                                    "Pending"    => isAr ? "معلق"         : "Pending",
+                                                    "Confirmed"  => isAr ? "مؤكد"          : "Confirmed",
+                                                    "Processing" => isAr ? "قيد التنفيذ"  : "Processing",
+                                                    "Completed"  => isAr ? "مكتمل"        : "Completed",
+                                                    "Cancelled"  => isAr ? "ملغى"          : "Cancelled",
+                                                    _            => order.Status
                                                 };
                                             }
-                                            <span class="badge badge-status @statusClass">@statusAr</span>
+                                            <span class="badge badge-status @statusClass">@statusLabel</span>
                                         </td>
                                         <td class="fw-medium">@order.TotalAmount.ToString("N2") @order.Currency</td>
                                         <td class="text-muted small">@order.CreatedAt.ToString("yyyy/MM/dd")</td>
@@ -134,22 +139,22 @@
     <div class="col-12 col-lg-4">
         <div class="card mb-3">
             <div class="card-header">
-                <i class="bi bi-info-circle text-primary me-2"></i>حالة المتجر
+                <i class="bi bi-info-circle text-primary me-2"></i>@(isAr ? "حالة المتجر" : "Store Status")
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                    <span class="text-muted">الدفع (Checkout)</span>
+                    <span class="text-muted">@(isAr ? "الدفع (Checkout)" : "Checkout")</span>
                     @if (Model.IsCheckoutEnabled)
                     {
-                        <span class="badge bg-success">مفعّل</span>
+                        <span class="badge bg-success">@(isAr ? "مفعّل" : "Enabled")</span>
                     }
                     else
                     {
-                        <span class="badge bg-danger">معطّل</span>
+                        <span class="badge bg-danger">@(isAr ? "معطّل" : "Disabled")</span>
                     }
                 </div>
                 <div class="d-flex align-items-center justify-content-between">
-                    <span class="text-muted">العملة</span>
+                    <span class="text-muted">@(isAr ? "العملة" : "Currency")</span>
                     <span class="fw-medium">@Model.Currency</span>
                 </div>
             </div>
@@ -157,24 +162,24 @@
 
         <div class="card">
             <div class="card-header">
-                <i class="bi bi-lightning text-warning me-2"></i>إجراءات سريعة
+                <i class="bi bi-lightning text-warning me-2"></i>@(isAr ? "إجراءات سريعة" : "Quick Actions")
             </div>
             <div class="card-body d-grid gap-2">
                 <a asp-area="Dashboard" asp-controller="DashboardProducts" asp-action="Create"
                    class="btn btn-outline-primary btn-sm text-start">
-                    <i class="bi bi-plus-circle me-2"></i>إضافة منتج جديد
+                    <i class="bi bi-plus-circle me-2"></i>@(isAr ? "إضافة منتج جديد" : "Add New Product")
                 </a>
                 <a asp-area="Dashboard" asp-controller="DashboardCategories" asp-action="Create"
                    class="btn btn-outline-secondary btn-sm text-start">
-                    <i class="bi bi-folder-plus me-2"></i>إضافة فئة جديدة
+                    <i class="bi bi-folder-plus me-2"></i>@(isAr ? "إضافة فئة جديدة" : "Add New Category")
                 </a>
                 <a asp-area="Dashboard" asp-controller="DashboardOrders" asp-action="Index"
                    class="btn btn-outline-success btn-sm text-start">
-                    <i class="bi bi-bag me-2"></i>عرض الطلبات
+                    <i class="bi bi-bag me-2"></i>@(isAr ? "عرض الطلبات" : "View Orders")
                 </a>
                 <a asp-area="Dashboard" asp-controller="DashboardSettings" asp-action="Index"
                    class="btn btn-outline-secondary btn-sm text-start">
-                    <i class="bi bi-gear me-2"></i>إعدادات المتجر
+                    <i class="bi bi-gear me-2"></i>@(isAr ? "إعدادات المتجر" : "Store Settings")
                 </a>
             </div>
         </div>

@@ -98,4 +98,20 @@ public sealed class DashboardAccountController : Controller
         await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
         return RedirectToAction("Login", "DashboardAccount", new { area = "Dashboard" });
     }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult SetLanguage(string lang, string? returnUrl = null)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            Expires = DateTimeOffset.UtcNow.AddYears(1),
+            IsEssential = true,
+            HttpOnly = false,
+        };
+        Response.Cookies.Append("dash_lang", lang == "en" ? "en" : "ar", cookieOptions);
+
+        var redirect = Url.IsLocalUrl(returnUrl) ? returnUrl : Url.Action("Index", "DashboardHome", new { area = "Dashboard" })!;
+        return Redirect(redirect);
+    }
 }

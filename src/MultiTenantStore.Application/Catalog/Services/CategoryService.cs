@@ -51,6 +51,7 @@ public sealed class CategoryService : ICategoryService
             Id = Guid.NewGuid(),
             ParentCategoryId = dto.ParentCategoryId,
             Name = dto.Name.Trim(),
+            NameAr = dto.NameAr?.Trim(),
             Slug = slug,
             IsActive = dto.IsActive,
             SortOrder = dto.SortOrder,
@@ -137,6 +138,7 @@ public sealed class CategoryService : ICategoryService
 
         category.ParentCategoryId = dto.ParentCategoryId;
         category.Name = dto.Name.Trim();
+        category.NameAr = dto.NameAr?.Trim();
         category.Slug = slug;
         category.IsActive = dto.IsActive;
         category.SortOrder = dto.SortOrder;
@@ -184,6 +186,7 @@ public sealed class CategoryService : ICategoryService
             Id = category.Id,
             ParentCategoryId = category.ParentCategoryId,
             Name = category.Name,
+            NameAr = category.NameAr,
             Slug = category.Slug,
             IsActive = category.IsActive,
             SortOrder = category.SortOrder

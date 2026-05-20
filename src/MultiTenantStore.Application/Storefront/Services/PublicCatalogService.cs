@@ -28,6 +28,7 @@ public sealed class PublicCatalogService : IPublicCatalogService
             {
                 Id = x.Id,
                 Name = x.Name,
+                NameAr = x.NameAr,
                 Slug = x.Slug
             })
             .ToList();
@@ -96,8 +97,10 @@ public sealed class PublicCatalogService : IPublicCatalogService
         {
             Id = product.Id,
             Name = product.Name,
+            NameAr = product.NameAr,
             Slug = product.Slug,
             ShortDescription = product.ShortDescription,
+            ShortDescriptionAr = product.ShortDescriptionAr,
             Price = product.Price,
             CompareAtPrice = product.CompareAtPrice,
             PrimaryImageUrl = primaryImageUrl,
@@ -113,9 +116,12 @@ public sealed class PublicCatalogService : IPublicCatalogService
             CategoryId = product.CategoryId,
             CategoryName = product.Category.Name,
             Name = product.Name,
+            NameAr = product.NameAr,
             Slug = product.Slug,
             ShortDescription = product.ShortDescription,
+            ShortDescriptionAr = product.ShortDescriptionAr,
             Description = product.Description,
+            DescriptionAr = product.DescriptionAr,
             SKU = product.SKU,
             Price = product.Price,
             CompareAtPrice = product.CompareAtPrice,
