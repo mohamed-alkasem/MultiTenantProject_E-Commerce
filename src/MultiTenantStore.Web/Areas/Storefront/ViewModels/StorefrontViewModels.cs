@@ -1,4 +1,5 @@
 using MultiTenantStore.Application.Carts.DTOs;
+using MultiTenantStore.Application.Customers.DTOs;
 using MultiTenantStore.Application.Orders.DTOs;
 using MultiTenantStore.Application.Storefront.DTOs;
 
@@ -103,4 +104,32 @@ public sealed class CustomerOrdersViewModel
     public StorefrontContext Store { get; set; } = new();
     public List<OrderListDto> Orders { get; set; } = new();
     public string CustomerName { get; set; } = "";
+}
+
+public sealed class CustomerProfileViewModel
+{
+    public StorefrontContext Store { get; set; } = new();
+    public string FirstName { get; set; } = "";
+    public string LastName { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string? PhoneNumber { get; set; }
+}
+
+public sealed class CustomerAddressesViewModel
+{
+    public StorefrontContext Store { get; set; } = new();
+    public List<CustomerAddressDto> Addresses { get; set; } = new();
+
+    // New address form fields
+    public string Title { get; set; } = "";
+    public string FullName { get; set; } = "";
+    public string PhoneNumber { get; set; } = "";
+    public string Country { get; set; } = "";
+    public string City { get; set; } = "";
+    public string? District { get; set; }
+    public string AddressLine1 { get; set; } = "";
+    public string? AddressLine2 { get; set; }
+    public string? PostalCode { get; set; }
+    public bool IsDefaultShipping { get; set; }
+    public bool IsDefaultBilling { get; set; }
 }

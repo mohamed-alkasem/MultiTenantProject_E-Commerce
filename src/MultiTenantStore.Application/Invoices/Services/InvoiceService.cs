@@ -96,7 +96,8 @@ public sealed class InvoiceService : IInvoiceService
 
         await _invoiceRepository.AddAsync(invoice, cancellationToken);
 
-        foreach (var orderItem in order.Items.Where(x => x.DeletedAt == null))
+        var savedItems = new List<InvoiceItem>();
+        foreach (var orderItem in order.Items.Where(x => x.DeletedAt == null).DistinctBy(x => x.Id))
         {
             var invoiceItem = new InvoiceItem
             {
@@ -117,10 +118,13 @@ public sealed class InvoiceService : IInvoiceService
             };
 
             await _invoiceItemRepository.AddAsync(invoiceItem, cancellationToken);
-            invoice.Items.Add(invoiceItem);
+            savedItems.Add(invoiceItem);
         }
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        foreach (var item in savedItems)
+            invoice.Items.Add(item);
 
         return ApiResponseDto<InvoiceDto>.Ok(
             MapToDto(invoice),
@@ -239,6 +243,7 @@ public sealed class InvoiceService : IInvoiceService
             PdfUrl = invoice.PdfUrl,
             Items = invoice.Items
                 .Where(x => x.DeletedAt == null)
+                .DistinctBy(x => x.Id)
                 .Select(x => new InvoiceItemDto
                 {
                     Id = x.Id,

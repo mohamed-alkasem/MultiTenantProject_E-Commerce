@@ -62,11 +62,11 @@ public sealed class ProductsController : StorefrontBaseController
     }
 
     [HttpGet]
-    public async Task<IActionResult> Details(string slug, CancellationToken ct)
+    public async Task<IActionResult> Details(string id, CancellationToken ct)
     {
         var storeCtx = GetStoreCtx();
 
-        var result = await _catalog.GetProductBySlugAsync(slug, ct);
+        var result = await _catalog.GetProductBySlugAsync(id, ct);
         if (!result.Success || result.Data is null)
             return NotFound();
 

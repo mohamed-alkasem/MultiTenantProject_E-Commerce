@@ -1,6 +1,8 @@
 @model InvoiceDetailsViewModel
 @{
+    bool isAr = (Context.Request.Cookies["dash_lang"] ?? "ar") == "ar";
     var inv = Model.Invoice;
+    ViewData["Title"] = isAr ? $"فاتورة #{inv.InvoiceNumber}" : $"Invoice #{inv.InvoiceNumber}";
 }
 
 <div class="d-flex align-items-center gap-2 mb-4">
@@ -8,23 +10,23 @@
         <i class="bi bi-arrow-right"></i>
     </a>
     <div>
-        <h5 class="mb-0 fw-bold">فاتورة #@inv.InvoiceNumber</h5>
+        <h5 class="mb-0 fw-bold">@(isAr ? "فاتورة" : "Invoice") #@inv.InvoiceNumber</h5>
         <small class="text-muted">@inv.IssueDate.ToString("yyyy/MM/dd")</small>
     </div>
-    <div class="me-auto d-flex gap-2">
+    <div class="@(isAr ? "me-auto" : "ms-auto") d-flex gap-2">
         @if (!string.IsNullOrEmpty(inv.PdfUrl))
         {
             <a href="@inv.PdfUrl" target="_blank" class="btn btn-sm btn-outline-info">
-                <i class="bi bi-file-pdf me-1"></i> فتح PDF
+                <i class="bi bi-file-pdf me-1"></i> @(isAr ? "فتح PDF" : "Open PDF")
             </a>
         }
         <a asp-action="DownloadPdf" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-download me-1"></i> تحميل PDF
+            <i class="bi bi-download me-1"></i> @(isAr ? "تحميل" : "Download")
         </a>
-        <form asp-action="GeneratePdf" asp-route-id="@inv.Id" method="post" class="d-inline">
+        <form method="post" action="/Dashboard/DashboardInvoices/GeneratePdf/@inv.Id" class="d-inline">
             @Html.AntiForgeryToken()
             <button type="submit" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-clockwise me-1"></i> إعادة إنشاء PDF
+                <i class="bi bi-arrow-clockwise me-1"></i> @(isAr ? "إعادة إنشاء PDF" : "Regenerate PDF")
             </button>
         </form>
     </div>
@@ -36,7 +38,7 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-6">
-                        <p class="text-muted small mb-1">المتجر</p>
+                        <p class="text-muted small mb-1">@(isAr ? "المتجر" : "Store")</p>
                         <p class="fw-bold mb-0">@inv.StoreNameSnapshot</p>
                         @if (!string.IsNullOrEmpty(inv.StoreAddressSnapshot))
                         {
@@ -44,11 +46,11 @@
                         }
                         @if (!string.IsNullOrEmpty(inv.StoreTaxNumberSnapshot))
                         {
-                            <p class="small text-muted mb-0">رقم ضريبي: @inv.StoreTaxNumberSnapshot</p>
+                            <p class="small text-muted mb-0">@(isAr ? "رقم ضريبي" : "Tax No"): @inv.StoreTaxNumberSnapshot</p>
                         }
                     </div>
                     <div class="col-6 text-end">
-                        <p class="text-muted small mb-1">العميل</p>
+                        <p class="text-muted small mb-1">@(isAr ? "العميل" : "Customer")</p>
                         <p class="fw-bold mb-0">@inv.CustomerNameSnapshot</p>
                         @if (!string.IsNullOrEmpty(inv.CustomerEmailSnapshot))
                         {
@@ -64,111 +66,127 @@
         </div>
 
         <div class="card">
-            <div class="card-header"><i class="bi bi-list-ul me-2 text-primary"></i>البنود</div>
+            <div class="card-header">
+                <i class="bi bi-list-ul me-2 text-primary"></i>@(isAr ? "بنود الفاتورة" : "Invoice Items")
+            </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th>المنتج</th>
-                                <th>الكمية</th>
-                                <th>السعر</th>
-                                <th>الضريبة</th>
-                                <th>الإجمالي</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in inv.Items)
-                            {
+                @if (!inv.Items.Any())
+                {
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-2 d-block mb-2 opacity-25"></i>
+                        <p class="small mb-0">@(isAr ? "لا توجد بنود في هذه الفاتورة" : "No items in this invoice")</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead class="bg-light">
                                 <tr>
-                                    <td>
-                                        <div class="fw-medium">@item.ProductNameSnapshot</div>
-                                        <small class="text-muted font-monospace">@item.SKU</small>
-                                    </td>
-                                    <td>@item.Quantity</td>
-                                    <td>@item.UnitPrice.ToString("N2")</td>
-                                    <td>@item.TaxAmount.ToString("N2")</td>
-                                    <td class="fw-medium">@item.LineTotal.ToString("N2")</td>
+                                    <th>@(isAr ? "المنتج" : "Product")</th>
+                                    <th>@(isAr ? "الكمية" : "Qty")</th>
+                                    <th>@(isAr ? "السعر" : "Unit Price")</th>
+                                    <th>@(isAr ? "الضريبة" : "Tax")</th>
+                                    <th>@(isAr ? "الإجمالي" : "Total")</th>
                                 </tr>
-                            }
-                        </tbody>
-                        <tfoot class="bg-light">
-                            <tr>
-                                <td colspan="4" class="text-end">المجموع الفرعي</td>
-                                <td>@inv.Subtotal.ToString("N2")</td>
-                            </tr>
-                            @if (inv.DiscountAmount > 0)
-                            {
+                            </thead>
+                            <tbody>
+                                @foreach (var item in inv.Items)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-medium">@item.ProductNameSnapshot</div>
+                                            @if (!string.IsNullOrEmpty(item.SKU))
+                                            {
+                                                <small class="text-muted font-monospace">@item.SKU</small>
+                                            }
+                                        </td>
+                                        <td>@item.Quantity</td>
+                                        <td>@item.UnitPrice.ToString("N2")</td>
+                                        <td>@item.TaxAmount.ToString("N2")</td>
+                                        <td class="fw-medium">@item.LineTotal.ToString("N2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="bg-light">
                                 <tr>
-                                    <td colspan="4" class="text-end text-success">الخصم</td>
-                                    <td class="text-success">-@inv.DiscountAmount.ToString("N2")</td>
+                                    <td colspan="4" class="text-end">@(isAr ? "المجموع الفرعي" : "Subtotal")</td>
+                                    <td>@inv.Subtotal.ToString("N2")</td>
                                 </tr>
-                            }
-                            @if (inv.TaxAmount > 0)
-                            {
+                                @if (inv.DiscountAmount > 0)
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-end text-success">@(isAr ? "الخصم" : "Discount")</td>
+                                        <td class="text-success">-@inv.DiscountAmount.ToString("N2")</td>
+                                    </tr>
+                                }
+                                @if (inv.TaxAmount > 0)
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-end">@(isAr ? "الضريبة" : "Tax")</td>
+                                        <td>@inv.TaxAmount.ToString("N2")</td>
+                                    </tr>
+                                }
+                                @if (inv.ShippingAmount > 0)
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-end">@(isAr ? "الشحن" : "Shipping")</td>
+                                        <td>@inv.ShippingAmount.ToString("N2")</td>
+                                    </tr>
+                                }
                                 <tr>
-                                    <td colspan="4" class="text-end">الضريبة</td>
-                                    <td>@inv.TaxAmount.ToString("N2")</td>
+                                    <td colspan="4" class="text-end fw-bold fs-6">@(isAr ? "الإجمالي" : "Total")</td>
+                                    <td class="fw-bold fs-6">@inv.TotalAmount.ToString("N2") @inv.Currency</td>
                                 </tr>
-                            }
-                            @if (inv.ShippingAmount > 0)
-                            {
-                                <tr>
-                                    <td colspan="4" class="text-end">الشحن</td>
-                                    <td>@inv.ShippingAmount.ToString("N2")</td>
-                                </tr>
-                            }
-                            <tr>
-                                <td colspan="4" class="text-end fw-bold fs-6">الإجمالي</td>
-                                <td class="fw-bold fs-6">@inv.TotalAmount.ToString("N2") @inv.Currency</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+                            </tfoot>
+                        </table>
+                    </div>
+                }
             </div>
         </div>
     </div>
 
     <div class="col-12 col-lg-4">
         <div class="card">
-            <div class="card-header"><i class="bi bi-info-circle me-2"></i>معلومات الفاتورة</div>
+            <div class="card-header">
+                <i class="bi bi-info-circle me-2"></i>@(isAr ? "معلومات الفاتورة" : "Invoice Info")
+            </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted small">رقم الفاتورة</span>
+                    <span class="text-muted small">@(isAr ? "رقم الفاتورة" : "Invoice #")</span>
                     <span class="fw-medium small">#@inv.InvoiceNumber</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted small">الحالة</span>
+                    <span class="text-muted small">@(isAr ? "الحالة" : "Status")</span>
                     <span>
                         @{
-                            var (cls2, ar2) = inv.Status switch
+                            var (cls2, lbl2) = inv.Status switch
                             {
-                                "Draft" => ("bg-secondary", "مسودة"),
-                                "Issued" => ("bg-primary", "صادرة"),
-                                "Paid" => ("bg-success", "مدفوعة"),
-                                "Cancelled" => ("bg-danger", "ملغاة"),
-                                _ => ("bg-secondary", inv.Status)
+                                "Draft"     => ("bg-secondary", isAr ? "مسودة"  : "Draft"),
+                                "Issued"    => ("bg-primary",   isAr ? "صادرة"  : "Issued"),
+                                "Paid"      => ("bg-success",   isAr ? "مدفوعة" : "Paid"),
+                                "Cancelled" => ("bg-danger",    isAr ? "ملغاة"  : "Cancelled"),
+                                _           => ("bg-secondary", inv.Status)
                             };
                         }
-                        <span class="badge @cls2">@ar2</span>
+                        <span class="badge @cls2">@lbl2</span>
                     </span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted small">تاريخ الإصدار</span>
+                    <span class="text-muted small">@(isAr ? "تاريخ الإصدار" : "Issue Date")</span>
                     <span class="small">@inv.IssueDate.ToString("yyyy/MM/dd")</span>
                 </div>
                 @if (inv.DueDate.HasValue)
                 {
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted small">تاريخ الاستحقاق</span>
+                        <span class="text-muted small">@(isAr ? "تاريخ الاستحقاق" : "Due Date")</span>
                         <span class="small">@inv.DueDate.Value.ToString("yyyy/MM/dd")</span>
                     </div>
                 }
                 <hr class="my-3" />
-                <a asp-area="Dashboard" asp-controller="DashboardOrders"
-                   asp-action="Details" asp-route-id="@inv.OrderId"
+                <a href="/Dashboard/DashboardOrders/Details/@inv.OrderId"
                    class="btn btn-outline-secondary btn-sm w-100">
-                    <i class="bi bi-bag me-1"></i> عرض الطلب
+                    <i class="bi bi-bag me-1"></i> @(isAr ? "عرض الطلب" : "View Order")
                 </a>
             </div>
         </div>

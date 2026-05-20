@@ -1,0 +1,185 @@
+@model CustomerAddressesViewModel
+@{
+    var store = Model.Store;
+    bool isAr = store.IsAr;
+    string slug = store.StoreSlug;
+    ViewData["Title"] = isAr ? "عناويني" : "My Addresses";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <div class="col-12 col-md-3">
+            <div class="card p-3">
+                <div class="text-center mb-3">
+                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-2"
+                         style="width:64px;height:64px;font-size:1.75rem;color:var(--store-primary)">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                </div>
+                <hr />
+                <nav class="d-flex flex-column gap-1">
+                    <a href="/s/@slug/Customer/Profile"
+                       class="btn btn-sm btn-outline-secondary text-start">
+                        <i class="bi bi-person me-2"></i>@(isAr ? "الملف الشخصي" : "My Profile")
+                    </a>
+                    <a href="/s/@slug/Customer/Addresses"
+                       class="btn btn-sm btn-primary text-start">
+                        <i class="bi bi-geo-alt me-2"></i>@(isAr ? "عناويني" : "My Addresses")
+                    </a>
+                    <a href="/s/@slug/Customer/Orders"
+                       class="btn btn-sm btn-outline-secondary text-start">
+                        <i class="bi bi-bag me-2"></i>@(isAr ? "طلباتي" : "My Orders")
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-9">
+            @if (Model.Addresses.Any())
+            {
+                <div class="row g-3 mb-4">
+                    @foreach (var addr in Model.Addresses)
+                    {
+                        <div class="col-12 col-lg-6">
+                            <div class="card h-100 @(addr.IsDefaultShipping ? "border-primary" : "")">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <span class="fw-semibold">@addr.Title</span>
+                                            @if (addr.IsDefaultShipping)
+                                            {
+                                                <span class="badge bg-primary ms-2" style="font-size:0.65rem;">
+                                                    @(isAr ? "شحن افتراضي" : "Default Shipping")
+                                                </span>
+                                            }
+                                            @if (addr.IsDefaultBilling)
+                                            {
+                                                <span class="badge bg-success ms-1" style="font-size:0.65rem;">
+                                                    @(isAr ? "فوترة افتراضية" : "Default Billing")
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <p class="mb-1 small">@addr.FullName</p>
+                                    @if (!string.IsNullOrEmpty(addr.PhoneNumber))
+                                    {
+                                        <p class="mb-1 small text-muted" dir="ltr">@addr.PhoneNumber</p>
+                                    }
+                                    <p class="mb-0 small text-muted">
+                                        @addr.AddressLine1
+                                        @if (!string.IsNullOrEmpty(addr.AddressLine2)) { <text>, @addr.AddressLine2</text> }
+                                    </p>
+                                    <p class="mb-0 small text-muted">
+                                        @addr.City
+                                        @if (!string.IsNullOrEmpty(addr.District)) { <text>, @addr.District</text> }
+                                        @if (!string.IsNullOrEmpty(addr.PostalCode)) { <text> @addr.PostalCode</text> }
+                                    </p>
+                                    <p class="mb-3 small text-muted">@addr.Country</p>
+
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        @if (!addr.IsDefaultShipping)
+                                        {
+                                            <form method="post" action="/s/@slug/Customer/SetDefaultShipping" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="addressId" value="@addr.Id" />
+                                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-star me-1"></i>@(isAr ? "افتراضي للشحن" : "Set Default")
+                                                </button>
+                                            </form>
+                                        }
+                                        <form method="post" action="/s/@slug/Customer/DeleteAddress" class="d-inline"
+                                              onsubmit="return confirm('@(isAr ? "حذف هذا العنوان؟" : "Delete this address?")')">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="addressId" value="@addr.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-4 mb-4">
+                    <i class="bi bi-geo-alt fs-1 d-block mb-2 opacity-25"></i>
+                    <p>@(isAr ? "لا توجد عناوين محفوظة بعد" : "No saved addresses yet")</p>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-header fw-semibold">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i>@(isAr ? "إضافة عنوان جديد" : "Add New Address")
+                </div>
+                <div class="card-body">
+                    <form method="post" action="/s/@slug/Customer/AddAddress">
+                        @Html.AntiForgeryToken()
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">@(isAr ? "عنوان مختصر" : "Label")</label>
+                                <input type="text" name="Title" class="form-control"
+                                       placeholder="@(isAr ? "مثال: المنزل، العمل" : "e.g. Home, Work")" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">
+                                    @(isAr ? "الاسم الكامل" : "Full Name") <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="FullName" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">@(isAr ? "رقم الجوال" : "Phone") <span class="text-danger">*</span></label>
+                                <input type="tel" name="PhoneNumber" class="form-control" dir="ltr" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">@(isAr ? "الدولة" : "Country") <span class="text-danger">*</span></label>
+                                <input type="text" name="Country" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">@(isAr ? "المدينة" : "City") <span class="text-danger">*</span></label>
+                                <input type="text" name="City" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">@(isAr ? "الحي" : "District")</label>
+                                <input type="text" name="District" class="form-control" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-medium">@(isAr ? "العنوان" : "Address Line 1") <span class="text-danger">*</span></label>
+                                <input type="text" name="AddressLine1" class="form-control" required />
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label fw-medium">@(isAr ? "العنوان (تكملة)" : "Address Line 2")</label>
+                                <input type="text" name="AddressLine2" class="form-control" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-medium">@(isAr ? "الرمز البريدي" : "Postal Code")</label>
+                                <input type="text" name="PostalCode" class="form-control" dir="ltr" />
+                            </div>
+                            <div class="col-12 d-flex gap-4">
+                                <div class="form-check">
+                                    <input type="checkbox" name="IsDefaultShipping" value="true" class="form-check-input" id="defShip" />
+                                    <label class="form-check-label" for="defShip">
+                                        @(isAr ? "عنوان الشحن الافتراضي" : "Default Shipping Address")
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="checkbox" name="IsDefaultBilling" value="true" class="form-check-input" id="defBill" />
+                                    <label class="form-check-label" for="defBill">
+                                        @(isAr ? "عنوان الفوترة الافتراضي" : "Default Billing Address")
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="bi bi-plus-circle me-1"></i>@(isAr ? "إضافة العنوان" : "Add Address")
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

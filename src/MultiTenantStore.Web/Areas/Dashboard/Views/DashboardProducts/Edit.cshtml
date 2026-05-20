@@ -3,6 +3,32 @@
     bool isAr = (Context.Request.Cookies["dash_lang"] ?? "ar") == "ar";
 }
 
+@* Secondary forms placed OUTSIDE the main edit form — avoids nested-form antiforgery failure *@
+@foreach (var img in Model.Images.OrderByDescending(x => x.IsPrimary).ThenBy(x => x.SortOrder))
+{
+    @if (!img.IsPrimary)
+    {
+        <form id="setPrimary_@img.Id" method="post" action="/Dashboard/DashboardProducts/SetPrimaryImage/@Model.Id">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="imageId" value="@img.Id" />
+        </form>
+    }
+    <form id="deleteImg_@img.Id" method="post" action="/Dashboard/DashboardProducts/DeleteImage/@Model.Id"
+          onsubmit="return confirm('@(isAr ? "حذف الصورة؟" : "Delete image?")')">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="imageId" value="@img.Id" />
+    </form>
+}
+
+<form id="uploadImgForm" method="post" action="/Dashboard/DashboardProducts/UploadImage/@Model.Id" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+</form>
+
+<form id="deleteProductForm" method="post" action="/Dashboard/DashboardProducts/Delete/@Model.Id"
+      onsubmit="return confirm('@(isAr ? "هل أنت متأكد من حذف هذا المنتج؟" : "Delete this product?")')">
+    @Html.AntiForgeryToken()
+</form>
+
 <div class="d-flex align-items-center gap-2 mb-4">
     <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-arrow-right"></i>
@@ -130,22 +156,17 @@
                                         <div class="position-absolute bottom-0 start-0 end-0 d-flex gap-1 p-1" style="background:rgba(0,0,0,0.5);">
                                             @if (!img.IsPrimary)
                                             {
-                                                <form method="post" action="/Dashboard/DashboardProducts/SetPrimaryImage/@Model.Id" class="flex-fill">
-                                                    @Html.AntiForgeryToken()
-                                                    <input type="hidden" name="imageId" value="@img.Id" />
-                                                    <button class="btn btn-xs btn-warning w-100" style="font-size:0.65rem;padding:2px 4px;" title="@(isAr ? "تعيين رئيسية" : "Set Main")">
-                                                        <i class="bi bi-star-fill"></i>
-                                                    </button>
-                                                </form>
-                                            }
-                                            <form method="post" action="/Dashboard/DashboardProducts/DeleteImage/@Model.Id"
-                                                  onsubmit="return confirm('@(isAr ? "حذف الصورة؟" : "Delete image?")')" class="flex-fill">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="imageId" value="@img.Id" />
-                                                <button class="btn btn-xs btn-danger w-100" style="font-size:0.65rem;padding:2px 4px;" title="@(isAr ? "حذف" : "Delete")">
-                                                    <i class="bi bi-trash"></i>
+                                                <button type="submit" form="setPrimary_@img.Id"
+                                                        class="btn btn-xs btn-warning flex-fill" style="font-size:0.65rem;padding:2px 4px;"
+                                                        title="@(isAr ? "تعيين رئيسية" : "Set Main")">
+                                                    <i class="bi bi-star-fill"></i>
                                                 </button>
-                                            </form>
+                                            }
+                                            <button type="submit" form="deleteImg_@img.Id"
+                                                    class="btn btn-xs btn-danger flex-fill" style="font-size:0.65rem;padding:2px 4px;"
+                                                    title="@(isAr ? "حذف" : "Delete")">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -157,21 +178,18 @@
                         <p class="text-muted small text-center mb-3"><i class="bi bi-image me-1"></i>@(isAr ? "لا توجد صور بعد" : "No images yet")</p>
                     }
 
-                    <form method="post" action="/Dashboard/DashboardProducts/UploadImage/@Model.Id" enctype="multipart/form-data">
-                        @Html.AntiForgeryToken()
-                        <div class="mb-2">
-                            <label class="form-label fw-medium small">@(isAr ? "رفع صورة جديدة" : "Upload New Image")</label>
-                            <input type="file" name="imageFile" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" required />
-                            <div class="form-text">JPG, PNG, WEBP — @(isAr ? "بحد أقصى 5 ميجا" : "max 5 MB")</div>
-                        </div>
-                        <div class="mb-2 form-check">
-                            <input type="checkbox" name="isPrimary" value="true" class="form-check-input" id="isPrimary" />
-                            <label class="form-check-label small" for="isPrimary">@(isAr ? "صورة رئيسية" : "Main image")</label>
-                        </div>
-                        <button type="submit" class="btn btn-sm btn-outline-warning w-100">
-                            <i class="bi bi-upload me-1"></i>@(isAr ? "رفع الصورة" : "Upload")
-                        </button>
-                    </form>
+                    <div class="mb-2">
+                        <label class="form-label fw-medium small">@(isAr ? "رفع صورة جديدة" : "Upload New Image")</label>
+                        <input type="file" name="imageFile" form="uploadImgForm" class="form-control form-control-sm" accept=".jpg,.jpeg,.png,.webp" required />
+                        <div class="form-text">JPG, PNG, WEBP — @(isAr ? "بحد أقصى 5 ميجا" : "max 5 MB")</div>
+                    </div>
+                    <div class="mb-2 form-check">
+                        <input type="checkbox" name="isPrimary" value="true" form="uploadImgForm" class="form-check-input" id="isPrimary" />
+                        <label class="form-check-label small" for="isPrimary">@(isAr ? "صورة رئيسية" : "Main image")</label>
+                    </div>
+                    <button type="submit" form="uploadImgForm" class="btn btn-sm btn-outline-warning w-100">
+                        <i class="bi bi-upload me-1"></i>@(isAr ? "رفع الصورة" : "Upload")
+                    </button>
                 </div>
             </div>
 
@@ -202,13 +220,9 @@
                     <i class="bi bi-check-circle me-1"></i> @(isAr ? "حفظ التعديلات" : "Save Changes")
                 </button>
                 <a asp-action="Index" class="btn btn-outline-secondary">@(isAr ? "إلغاء" : "Cancel")</a>
-                <form method="post" action="/Dashboard/DashboardProducts/Delete/@Model.Id"
-                      onsubmit="return confirm('@(isAr ? "هل أنت متأكد من حذف هذا المنتج؟" : "Delete this product?")')">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-outline-danger w-100">
-                        <i class="bi bi-trash me-1"></i> @(isAr ? "حذف المنتج" : "Delete Product")
-                    </button>
-                </form>
+                <button type="submit" form="deleteProductForm" class="btn btn-outline-danger w-100">
+                    <i class="bi bi-trash me-1"></i> @(isAr ? "حذف المنتج" : "Delete Product")
+                </button>
             </div>
         </div>
     </div>

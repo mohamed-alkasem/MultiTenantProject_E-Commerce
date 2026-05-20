@@ -1,10 +1,12 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MultiTenantStore.Application.Auth.DTOs;
 using MultiTenantStore.Application.Auth.Interfaces;
 using MultiTenantStore.Application.Common.MultiTenancy;
+using MultiTenantStore.Domain.Platform;
 using MultiTenantStore.Web.Areas.Dashboard.ViewModels;
 
 namespace MultiTenantStore.Web.Areas.Dashboard.Controllers;
@@ -13,10 +15,12 @@ namespace MultiTenantStore.Web.Areas.Dashboard.Controllers;
 public sealed class DashboardAccountController : Controller
 {
     private readonly IAuthService _authService;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public DashboardAccountController(IAuthService authService)
+    public DashboardAccountController(IAuthService authService, UserManager<ApplicationUser> userManager)
     {
         _authService = authService;
+        _userManager = userManager;
     }
 
     [HttpGet]
@@ -97,6 +101,82 @@ public sealed class DashboardAccountController : Controller
     {
         await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
         return RedirectToAction("Login", "DashboardAccount", new { area = "Dashboard" });
+    }
+
+    [HttpGet]
+    [Authorize(AuthenticationSchemes = "Identity.Application")]
+    public async Task<IActionResult> Profile()
+    {
+        var userId = User.FindFirstValue(TenantClaimTypes.UserId);
+        if (!Guid.TryParse(userId, out var id)) return RedirectToAction(nameof(Login));
+
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user is null) return RedirectToAction(nameof(Login));
+
+        ViewData["Title"] = "معلومات الحساب";
+        return View(new DashboardProfileViewModel
+        {
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email ?? "",
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(AuthenticationSchemes = "Identity.Application")]
+    public async Task<IActionResult> UpdateProfile(DashboardProfileViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewData["Title"] = "معلومات الحساب";
+            model.Email = User.FindFirstValue(ClaimTypes.Email) ?? "";
+            return View("Profile", model);
+        }
+
+        var userId = User.FindFirstValue(TenantClaimTypes.UserId);
+        if (!Guid.TryParse(userId, out var id)) return RedirectToAction(nameof(Login));
+
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user is null) return RedirectToAction(nameof(Login));
+
+        user.FirstName = model.FirstName.Trim();
+        user.LastName = model.LastName.Trim();
+        user.UpdatedAt = DateTime.UtcNow;
+
+        var result = await _userManager.UpdateAsync(user);
+        TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] =
+            result.Succeeded
+                ? "تم تحديث معلومات الحساب بنجاح / Profile updated"
+                : string.Join(", ", result.Errors.Select(e => e.Description));
+
+        return RedirectToAction(nameof(Profile));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(AuthenticationSchemes = "Identity.Application")]
+    public async Task<IActionResult> ChangePassword(DashboardChangePasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] = "يرجى التحقق من البيانات المدخلة";
+            return RedirectToAction(nameof(Profile));
+        }
+
+        var userId = User.FindFirstValue(TenantClaimTypes.UserId);
+        if (!Guid.TryParse(userId, out var id)) return RedirectToAction(nameof(Login));
+
+        var user = await _userManager.FindByIdAsync(id.ToString());
+        if (user is null) return RedirectToAction(nameof(Login));
+
+        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+        TempData[result.Succeeded ? "SuccessMessage" : "ErrorMessage"] =
+            result.Succeeded
+                ? "تم تغيير كلمة المرور بنجاح / Password changed"
+                : string.Join(", ", result.Errors.Select(e => e.Description));
+
+        return RedirectToAction(nameof(Profile));
     }
 
     [HttpPost]

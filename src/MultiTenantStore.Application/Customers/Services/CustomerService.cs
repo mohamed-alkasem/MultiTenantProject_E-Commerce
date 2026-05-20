@@ -9,15 +9,18 @@ public sealed class CustomerService : ICustomerService
 {
     private readonly ICustomerRepository _customerRepository;
     private readonly ICurrentCustomerService _currentCustomerService;
+    private readonly ICustomerPasswordHasher _passwordHasher;
     private readonly ITenantUnitOfWork _unitOfWork;
 
     public CustomerService(
         ICustomerRepository customerRepository,
         ICurrentCustomerService currentCustomerService,
+        ICustomerPasswordHasher passwordHasher,
         ITenantUnitOfWork unitOfWork)
     {
         _customerRepository = customerRepository;
         _currentCustomerService = currentCustomerService;
+        _passwordHasher = passwordHasher;
         _unitOfWork = unitOfWork;
     }
 
@@ -80,6 +83,31 @@ public sealed class CustomerService : ICustomerService
         return ApiResponseDto<CustomerDto>.Ok(
             MapToDto(customer),
             "Customer profile updated successfully.");
+    }
+
+    public async Task<ApiResponseDto<bool>> ChangePasswordAsync(
+        string currentPassword,
+        string newPassword,
+        CancellationToken cancellationToken = default)
+    {
+        var customerId = _currentCustomerService.CustomerId;
+        if (customerId is null)
+            return ApiResponseDto<bool>.Fail("Customer is not authenticated.");
+
+        var customer = await _customerRepository.GetDetailsAsync(customerId.Value, cancellationToken);
+        if (customer is null)
+            return ApiResponseDto<bool>.Fail("Customer was not found.");
+
+        if (!_passwordHasher.VerifyPassword(customer, currentPassword))
+            return ApiResponseDto<bool>.Fail("Current password is incorrect.");
+
+        customer.PasswordHash = _passwordHasher.HashPassword(customer, newPassword);
+        customer.UpdatedAt = DateTime.UtcNow;
+
+        _customerRepository.Update(customer);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return ApiResponseDto<bool>.Ok(true, "Password changed successfully.");
     }
 
     private static CustomerDto MapToDto(Domain.Tenant.Customer customer)

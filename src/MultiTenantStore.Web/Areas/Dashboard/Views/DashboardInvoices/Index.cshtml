@@ -1,9 +1,12 @@
 @model List<InvoiceListDto>
+@{
+    bool isAr = (Context.Request.Cookies["dash_lang"] ?? "ar") == "ar";
+}
 
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
-        <h5 class="mb-0 fw-bold">الفواتير</h5>
-        <p class="text-muted small mb-0">@Model.Count فاتورة</p>
+        <h5 class="mb-0 fw-bold">@(isAr ? "الفواتير" : "Invoices")</h5>
+        <p class="text-muted small mb-0">@Model.Count @(isAr ? "فاتورة" : "invoices")</p>
     </div>
 </div>
 
@@ -13,7 +16,7 @@
         {
             <div class="text-center text-muted py-5">
                 <i class="bi bi-receipt-cutoff fs-1 d-block mb-2 opacity-25"></i>
-                <p class="mb-0">لا توجد فواتير حتى الآن</p>
+                <p class="mb-0">@(isAr ? "لا توجد فواتير حتى الآن" : "No invoices yet")</p>
             </div>
         }
         else
@@ -22,11 +25,11 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light">
                         <tr>
-                            <th>رقم الفاتورة</th>
-                            <th>العميل</th>
-                            <th>الحالة</th>
-                            <th>المبلغ</th>
-                            <th>تاريخ الإصدار</th>
+                            <th>@(isAr ? "رقم الفاتورة" : "Invoice #")</th>
+                            <th>@(isAr ? "العميل" : "Customer")</th>
+                            <th>@(isAr ? "الحالة" : "Status")</th>
+                            <th>@(isAr ? "المبلغ" : "Amount")</th>
+                            <th>@(isAr ? "تاريخ الإصدار" : "Issue Date")</th>
                             <th>PDF</th>
                             <th></th>
                         </tr>
@@ -39,23 +42,24 @@
                                 <td>@invoice.CustomerNameSnapshot</td>
                                 <td>
                                     @{
-                                        var (cls, ar) = invoice.Status switch
+                                        var (cls, lbl) = invoice.Status switch
                                         {
-                                            "Draft" => ("bg-secondary", "مسودة"),
-                                            "Issued" => ("bg-primary", "صادرة"),
-                                            "Paid" => ("bg-success", "مدفوعة"),
-                                            "Cancelled" => ("bg-danger", "ملغاة"),
-                                            _ => ("bg-secondary", invoice.Status)
+                                            "Draft"     => ("bg-secondary", isAr ? "مسودة"  : "Draft"),
+                                            "Issued"    => ("bg-primary",   isAr ? "صادرة"  : "Issued"),
+                                            "Paid"      => ("bg-success",   isAr ? "مدفوعة" : "Paid"),
+                                            "Cancelled" => ("bg-danger",    isAr ? "ملغاة"  : "Cancelled"),
+                                            _           => ("bg-secondary", invoice.Status)
                                         };
                                     }
-                                    <span class="badge badge-status @cls">@ar</span>
+                                    <span class="badge badge-status @cls">@lbl</span>
                                 </td>
                                 <td class="fw-medium">@invoice.TotalAmount.ToString("N2") @invoice.Currency</td>
                                 <td class="text-muted small">@invoice.IssueDate.ToString("yyyy/MM/dd")</td>
                                 <td>
                                     @if (!string.IsNullOrEmpty(invoice.PdfUrl))
                                     {
-                                        <a href="@invoice.PdfUrl" target="_blank" class="btn btn-action btn-outline-info" title="فتح PDF">
+                                        <a href="@invoice.PdfUrl" target="_blank" class="btn btn-action btn-outline-info"
+                                           title="@(isAr ? "فتح PDF" : "Open PDF")">
                                             <i class="bi bi-file-pdf"></i>
                                         </a>
                                     }
@@ -66,7 +70,8 @@
                                 </td>
                                 <td>
                                     <a asp-action="Details" asp-route-id="@invoice.Id"
-                                       class="btn btn-action btn-outline-secondary" title="التفاصيل">
+                                       class="btn btn-action btn-outline-secondary"
+                                       title="@(isAr ? "التفاصيل" : "Details")">
                                         <i class="bi bi-eye"></i>
                                     </a>
                                 </td>

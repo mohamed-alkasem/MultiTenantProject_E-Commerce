@@ -1,0 +1,111 @@
+@model CustomerProfileViewModel
+@{
+    var store = Model.Store;
+    bool isAr = store.IsAr;
+    string slug = store.StoreSlug;
+    ViewData["Title"] = isAr ? "ملفي الشخصي" : "My Profile";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <div class="col-12 col-md-3">
+            <div class="card p-3">
+                <div class="text-center mb-3">
+                    <div class="rounded-circle bg-light d-inline-flex align-items-center justify-content-center mb-2"
+                         style="width:64px;height:64px;font-size:1.75rem;color:var(--store-primary)">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <div class="fw-semibold">@Model.FirstName @Model.LastName</div>
+                    <div class="text-muted small">@Model.Email</div>
+                </div>
+                <hr />
+                <nav class="d-flex flex-column gap-1">
+                    <a href="/s/@slug/Customer/Profile"
+                       class="btn btn-sm btn-primary text-start">
+                        <i class="bi bi-person me-2"></i>@(isAr ? "الملف الشخصي" : "My Profile")
+                    </a>
+                    <a href="/s/@slug/Customer/Addresses"
+                       class="btn btn-sm btn-outline-secondary text-start">
+                        <i class="bi bi-geo-alt me-2"></i>@(isAr ? "عناويني" : "My Addresses")
+                    </a>
+                    <a href="/s/@slug/Customer/Orders"
+                       class="btn btn-sm btn-outline-secondary text-start">
+                        <i class="bi bi-bag me-2"></i>@(isAr ? "طلباتي" : "My Orders")
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-9 d-flex flex-column gap-4">
+            <div class="card">
+                <div class="card-header fw-semibold">
+                    <i class="bi bi-person me-2 text-primary"></i>@(isAr ? "البيانات الشخصية" : "Personal Information")
+                </div>
+                <div class="card-body">
+                    <form method="post" action="/s/@slug/Customer/UpdateProfile">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">@(isAr ? "البريد الإلكتروني" : "Email")</label>
+                            <input type="email" class="form-control bg-light" value="@Model.Email" disabled />
+                            <div class="form-text">@(isAr ? "لا يمكن تغيير البريد الإلكتروني" : "Email cannot be changed")</div>
+                        </div>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">
+                                    @(isAr ? "الاسم الأول" : "First Name") <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="FirstName" value="@Model.FirstName" class="form-control" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-medium">
+                                    @(isAr ? "اسم العائلة" : "Last Name") <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="LastName" value="@Model.LastName" class="form-control" required />
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-medium">@(isAr ? "رقم الجوال" : "Phone Number")</label>
+                            <input type="tel" name="PhoneNumber" value="@Model.PhoneNumber" class="form-control" dir="ltr" />
+                        </div>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-circle me-1"></i>@(isAr ? "حفظ التغييرات" : "Save Changes")
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header fw-semibold">
+                    <i class="bi bi-shield-lock me-2 text-primary"></i>@(isAr ? "تغيير كلمة المرور" : "Change Password")
+                </div>
+                <div class="card-body">
+                    <form method="post" action="/s/@slug/Customer/ChangePassword">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">
+                                @(isAr ? "كلمة المرور الحالية" : "Current Password") <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" name="currentPassword" class="form-control" dir="ltr" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-medium">
+                                @(isAr ? "كلمة المرور الجديدة" : "New Password") <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" name="newPassword" class="form-control" dir="ltr" required minlength="6" />
+                            <div class="form-text">@(isAr ? "6 أحرف على الأقل" : "At least 6 characters")</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-medium">
+                                @(isAr ? "تأكيد كلمة المرور الجديدة" : "Confirm New Password") <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" name="confirmNewPassword" class="form-control" dir="ltr" required minlength="6" />
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary px-4">
+                            <i class="bi bi-key me-1"></i>@(isAr ? "تغيير كلمة المرور" : "Change Password")
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

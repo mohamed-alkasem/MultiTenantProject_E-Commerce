@@ -69,6 +69,9 @@ public sealed class PublicCatalogService : IPublicCatalogService
         string slug,
         CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(slug))
+            return ApiResponseDto<PublicProductDetailsDto>.Fail("Product was not found.");
+
         var normalizedSlug = slug.Trim().ToLowerInvariant();
 
         var product = await _productRepository.GetActiveDetailsBySlugAsync(

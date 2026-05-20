@@ -11,4 +11,9 @@ public interface ICustomerService
     Task<ApiResponseDto<CustomerDto>> UpdateProfileAsync(
         UpdateCustomerDto dto,
         CancellationToken cancellationToken = default);
+
+    Task<ApiResponseDto<bool>> ChangePasswordAsync(
+        string currentPassword,
+        string newPassword,
+        CancellationToken cancellationToken = default);
 }

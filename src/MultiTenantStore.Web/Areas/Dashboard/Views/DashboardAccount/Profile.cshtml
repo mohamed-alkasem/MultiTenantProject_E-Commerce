@@ -1,0 +1,90 @@
+@model DashboardProfileViewModel
+@{
+    bool isAr = (Context.Request.Cookies["dash_lang"] ?? "ar") == "ar";
+    ViewData["Title"] = isAr ? "معلومات الحساب" : "Account Settings";
+}
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <div>
+        <h5 class="mb-0 fw-bold">@(isAr ? "معلومات الحساب" : "Account Settings")</h5>
+        <p class="text-muted small mb-0">@(isAr ? "إدارة بيانات حسابك الشخصي" : "Manage your personal account details")</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-person-circle me-2 text-primary"></i>@(isAr ? "البيانات الشخصية" : "Personal Information")
+            </div>
+            <div class="card-body">
+                <form method="post" action="/Dashboard/DashboardAccount/UpdateProfile">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">@(isAr ? "البريد الإلكتروني" : "Email")</label>
+                        <input type="email" class="form-control bg-light" value="@Model.Email" readonly disabled />
+                        <div class="form-text">@(isAr ? "لا يمكن تغيير البريد الإلكتروني" : "Email cannot be changed")</div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="FirstName" class="form-label fw-medium">
+                                @(isAr ? "الاسم الأول" : "First Name") <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="FirstName" class="form-control" />
+                            <span asp-validation-for="FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="LastName" class="form-label fw-medium">
+                                @(isAr ? "اسم العائلة" : "Last Name") <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="LastName" class="form-control" />
+                            <span asp-validation-for="LastName" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-1"></i>@(isAr ? "حفظ التغييرات" : "Save Changes")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-shield-lock me-2 text-warning"></i>@(isAr ? "تغيير كلمة المرور" : "Change Password")
+            </div>
+            <div class="card-body">
+                <form method="post" action="/Dashboard/DashboardAccount/ChangePassword">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            @(isAr ? "كلمة المرور الحالية" : "Current Password") <span class="text-danger">*</span>
+                        </label>
+                        <input type="password" name="CurrentPassword" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">
+                            @(isAr ? "كلمة المرور الجديدة" : "New Password") <span class="text-danger">*</span>
+                        </label>
+                        <input type="password" name="NewPassword" class="form-control" minlength="6" required />
+                        <div class="form-text">@(isAr ? "6 أحرف على الأقل" : "At least 6 characters")</div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-medium">
+                            @(isAr ? "تأكيد كلمة المرور الجديدة" : "Confirm New Password") <span class="text-danger">*</span>
+                        </label>
+                        <input type="password" name="ConfirmNewPassword" class="form-control" required />
+                    </div>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-key me-1"></i>@(isAr ? "تغيير كلمة المرور" : "Change Password")
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+}

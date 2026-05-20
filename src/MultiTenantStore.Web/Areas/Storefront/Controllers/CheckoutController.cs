@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using MultiTenantStore.Application.Carts.Services;
 using MultiTenantStore.Application.Checkout.Services;
 using MultiTenantStore.Application.Common.MultiTenancy;
+using MultiTenantStore.Application.Customers.Services;
 using MultiTenantStore.Application.Invoices.DTOs;
 using MultiTenantStore.Application.Invoices.Services;
 using MultiTenantStore.Application.Orders.DTOs;
@@ -14,6 +15,7 @@ public sealed class CheckoutController : StorefrontBaseController
 {
     private readonly ICheckoutService _checkout;
     private readonly IInvoiceService _invoiceService;
+    private readonly ICustomerAddressService _addressService;
 
     public CheckoutController(
         ITenantStore tenantStore,
@@ -21,11 +23,13 @@ public sealed class CheckoutController : StorefrontBaseController
         MainDbContext mainDb,
         ICartService cartService,
         ICheckoutService checkout,
-        IInvoiceService invoiceService)
+        IInvoiceService invoiceService,
+        ICustomerAddressService addressService)
         : base(tenantStore, currentTenant, mainDb, cartService)
     {
         _checkout = checkout;
         _invoiceService = invoiceService;
+        _addressService = addressService;
     }
 
     [HttpGet]
@@ -46,6 +50,27 @@ public sealed class CheckoutController : StorefrontBaseController
             vm.FirstName = HttpContext.Session.GetString("CustomerFirstName") ?? "";
             vm.LastName = HttpContext.Session.GetString("CustomerLastName") ?? "";
             vm.Email = HttpContext.Session.GetString("CustomerEmail") ?? "";
+
+            // Pre-fill address from default shipping address
+            try
+            {
+                var addressesResult = await _addressService.GetAddressesAsync(ct);
+                var defaultAddr = addressesResult.Data?
+                    .FirstOrDefault(a => a.IsDefaultShipping)
+                    ?? addressesResult.Data?.FirstOrDefault();
+
+                if (defaultAddr is not null)
+                {
+                    vm.Phone = defaultAddr.PhoneNumber ?? "";
+                    vm.Country = defaultAddr.Country;
+                    vm.City = defaultAddr.City;
+                    vm.District = defaultAddr.District;
+                    vm.AddressLine1 = defaultAddr.AddressLine1;
+                    vm.AddressLine2 = defaultAddr.AddressLine2;
+                    vm.PostalCode = defaultAddr.PostalCode;
+                }
+            }
+            catch { /* address pre-fill is non-critical */ }
         }
 
         return View(vm);
