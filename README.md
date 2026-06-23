@@ -32,8 +32,8 @@ The system includes a comprehensive Swagger UI for API exploration and testing. 
 - AWS Account (for S3 storage)
 
 ### Configuration
-
-
+1. **Clone the repository:**
+   git clone [https://github.com/mohamed-alkasem/MultiTenantProject_E-Commerce.git](https://github.com/mohamed-alkasem/MultiTenantProject_E-Commerce.git)
 Environment Setup:
 
 Locate the appsettings.json file.
@@ -45,12 +45,10 @@ Update the AWS section with your own credentials (AccessKey, SecretKey, and Buck
 Database Initialization
 Ensure your environment is set up to match the .NET 9.0 dependencies. Run the following command to apply migrations and initialize the database schema:
 
-Bash
 dotnet ef database update
 Running the Application
 After configuring your environment and database, run the backend service:
 
-Bash
 dotnet run
 Security & Best Practices
 The application uses modern .NET 9 features for performance and security.
@@ -63,6 +61,3 @@ Backend API: Well-developed and functional.
 Frontend/Dashboard: Currently under active development to provide a seamless UI experience.
 
 Developed by Mohamad Alkassem
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/mohamed-alkasem/MultiTenantProject_E-Commerce.git](https://github.com/mohamed-alkasem/MultiTenantProject_E-Commerce.git)
